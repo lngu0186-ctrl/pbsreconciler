@@ -114,17 +114,17 @@ export function reconcile(summaries: SummaryEntry[], advices: AdviceEntry[]): Re
       }
     }
 
-    // Claim period sanity
+    // Claim period sanity — use the chosen primary advice entry
     const sCp = sList[0]?.claimPeriod;
-    const aCp = aList[0]?.claimPeriod;
+    const aCp = primary?.claimPeriod ?? aList[0]?.claimPeriod;
     if (sCp && aCp && sCp !== aCp) {
       issueFlags.push("claim-period-mismatch");
       notes.push(`Claim period differs: summary=${sCp}, advice=${aCp}`);
     }
 
-    // Bank ref sanity
+    // Bank ref sanity — use the chosen primary advice entry
     const sBank = sList[0]?.bankReferenceNumber;
-    const aBank = aList[0]?.bankReferenceNumber;
+    const aBank = primary?.bankReferenceNumber ?? aList[0]?.bankReferenceNumber;
     if (sBank && aBank && sBank !== aBank) {
       issueFlags.push("bank-ref-mismatch");
     }
@@ -145,7 +145,7 @@ export function reconcile(summaries: SummaryEntry[], advices: AdviceEntry[]): Re
       status,
       issueFlags,
       summaryRecord: sList[0],
-      adviceRecord: aList[0],
+      adviceRecord: primary ?? aList[0],
       notes,
     });
   }
