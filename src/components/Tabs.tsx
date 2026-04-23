@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment as Frag, useMemo, useState } from "react";
 import { useAppStore } from "@/store/appStore";
 import { KpiCard } from "@/components/KpiCard";
 import { StatusBadge, STATUS_LABELS } from "@/components/StatusBadge";
@@ -537,7 +537,7 @@ export function FilesTab() {
         </thead>
         <tbody className="divide-y divide-border">
           {files.map((f) => (
-            <Fragment key={f.id}>
+            <Frag key={f.id}>
               <tr key={f.id}>
                 <td className="px-2 py-1.5">
                   <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => toggle(f.id)}>
@@ -578,7 +578,7 @@ export function FilesTab() {
                   </td>
                 </tr>
               )}
-            </Fragment>
+            </Frag>
           ))}
         </tbody>
       </table>
