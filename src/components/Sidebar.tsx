@@ -3,6 +3,7 @@ import { useAppStore } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Mono } from "@/components/Mono";
+import { ReconTestButton } from "@/components/ReconTestButton";
 import {
   Upload,
   FileText,
@@ -146,6 +147,7 @@ export function Sidebar() {
             Clear
           </Button>
         </div>
+        <ReconTestButton />
       </div>
 
       <div className="flex-1 overflow-y-auto border-t border-border px-3 py-3">
