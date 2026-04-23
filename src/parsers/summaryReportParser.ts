@@ -9,12 +9,15 @@ const CLAIM_PERIOD_RE = /\b(?:claim\s*period|period)[:\s#-]*?(\d{3,4})\b/i;
 const SUBTOTAL_GROUP_RE = /^\s*Sub\s*Total\b/i;
 const AMT_PAID_LABEL_RE = /Amt\.?\s*Paid\b/i;
 const MONEY_TOKEN_RE = /[\d,]+\.\d{2}/g;
+// Grand-total / footer rows that must NEVER be assigned to a PBS Payment ID record
+const GRAND_TOTAL_RE = /(Total\s*Rx\s*Trans|Total\s*Amt\.?\s*Paid|Grand\s*Total)/i;
 
 export interface SummaryParseResult {
   entries: SummaryEntry[];
   warnings: ParseWarning[];
   reportDate?: string;
   bankReferences: string[];
+  reportGrandTotal?: number;
 }
 
 interface IdAnchor {
@@ -89,6 +92,8 @@ export function parseSummaryReport(
   for (let i = 0; i < lines.length; i++) {
     const match = lines[i].match(PBS_ID_RE);
     if (!match || !match[1].startsWith("100")) continue;
+    // Never treat a grand-total / footer row as a PBS Payment ID record
+    if (GRAND_TOTAL_RE.test(lines[i])) continue;
 
     anchors.push({
       lineIdx: i,
@@ -110,7 +115,10 @@ export function parseSummaryReport(
     }
 
     const blockLines = lines.slice(startLine, endLine).filter(Boolean);
-    const blockText = blockLines.join("\n");
+    // Join with a space so that values on continuation lines (e.g. a subtotal
+    // that wraps onto the next line) are part of the same token stream.
+    const blockText = blockLines.join(" ");
+    const blockTextDisplay = blockLines.join("\n");
     const localWarnings: ParseWarning[] = [];
     const ctxBank = bankRefAtLine[startLine];
     const claimPeriod = claimPeriodAtLine[startLine] ?? documentClaimPeriod;
@@ -120,57 +128,71 @@ export function parseSummaryReport(
     let concessionalBenefits: number | undefined;
     let entitlementBenefits: number | undefined;
     let repatriationBenefits: number | undefined;
-    let doctorsBagBenefits: number | undefined;
+    const doctorsBagBenefits: number | undefined = undefined;
     let dbfAmount: number | undefined;
     let subtotal: number | undefined;
     let incentives: number | undefined;
     let total: number | undefined;
     let confidence = 0.3;
 
+    // Capture everything after the Amt. Paid label. The first decimal token
+    // there IS the Amt. Paid value; everything after that is the positional
+    // benefit/total stream.
     const afterAmtPaid = blockText.match(/Amt\.?\s*Paid\b([\s\S]*)/i)?.[1] ?? "";
     const amountTokens = extractMoneyValues(afterAmtPaid);
-    const postAmountValues = amountTokens.slice(1);
-    const inferredSubtotal = postAmountValues.length > 0;
 
     if (amountTokens.length > 0) {
       amountPaid = amountTokens[0];
+      // CRITICAL: remove Amt. Paid from the array before positional assignment.
+      // Otherwise every field shifts right by one and subtotal lands at idx 6.
+      const amounts = amountTokens.slice(1);
 
-      if (postAmountValues.length >= 8) {
-        generalBenefits = postAmountValues[0];
-        concessionalBenefits = postAmountValues[1];
-        entitlementBenefits = postAmountValues[2];
-        repatriationBenefits = postAmountValues[3];
-        dbfAmount = postAmountValues[4];
-        subtotal = postAmountValues[5];
-        incentives = postAmountValues[6];
-        total = postAmountValues[7];
-      } else {
-        generalBenefits = amountPaid;
-        concessionalBenefits = postAmountValues[0];
-        entitlementBenefits = postAmountValues[1];
-        repatriationBenefits = postAmountValues[2];
-        dbfAmount = postAmountValues[3];
-        subtotal = postAmountValues[4];
-        incentives = postAmountValues[5];
-        total = postAmountValues[6];
-      }
+      generalBenefits = amounts[0];
+      concessionalBenefits = amounts[1];
+      entitlementBenefits = amounts[2];
+      repatriationBenefits = amounts[3];
+      dbfAmount = amounts[4];
+      subtotal = amounts[5];
+      incentives = amounts[6];
+      total = amounts[7];
 
-      if (subtotal === undefined && postAmountValues.length > 0) {
-        subtotal = postAmountValues[postAmountValues.length - 1];
+      // Validation: subtotal must be >= largest individual benefit.
+      // If positional pick is wrong (or array short), fall back to last value.
+      const maxBenefit = Math.max(
+        generalBenefits ?? 0,
+        concessionalBenefits ?? 0,
+        entitlementBenefits ?? 0,
+        repatriationBenefits ?? 0,
+        dbfAmount ?? 0,
+      );
+      const lastValue = amounts.length > 0 ? amounts[amounts.length - 1] : undefined;
+
+      if (subtotal === undefined && lastValue !== undefined) {
+        subtotal = lastValue;
+        confidence = 0.6;
+      } else if (subtotal !== undefined && subtotal < maxBenefit && lastValue !== undefined) {
+        localWarnings.push({
+          type: "subtotal-validation",
+          severity: "warning",
+          message: `Subtotal at position 5 (${subtotal}) less than max benefit (${maxBenefit}) for ${anchor.pbsPaymentId}; using last value`,
+          pbsPaymentId: anchor.pbsPaymentId,
+        });
+        subtotal = lastValue;
+        confidence = 0.6;
+      } else if (subtotal !== undefined && subtotal > 0) {
+        confidence = 0.9;
       }
 
       if (total === undefined) {
-        total = postAmountValues[postAmountValues.length - 1] ?? subtotal;
+        total = lastValue ?? subtotal;
       }
 
-      if (postAmountValues.length < 3) {
+      if (amounts.length < 3) {
         confidence = 0.3;
-      } else if (subtotal !== undefined && subtotal > 0) {
-        confidence = subtotal === postAmountValues[postAmountValues.length >= 8 ? 5 : 4] ? 0.9 : 0.6;
-      } else if (inferredSubtotal) {
-        confidence = 0.6;
       }
     }
+
+    const postAmountCount = Math.max(0, amountTokens.length - 1);
 
     if (!AMT_PAID_LABEL_RE.test(blockText)) {
       localWarnings.push({
@@ -178,17 +200,17 @@ export function parseSummaryReport(
         severity: "warning",
         message: `Could not locate Amt. Paid for ${anchor.pbsPaymentId}`,
         pbsPaymentId: anchor.pbsPaymentId,
-        textSnippet: blockText.slice(0, 240),
+        textSnippet: blockTextDisplay.slice(0, 240),
       });
     }
 
-    if (postAmountValues.length < 3) {
+    if (postAmountCount < 3) {
       localWarnings.push({
         type: "incomplete-row",
         severity: "warning",
-        message: `Only ${postAmountValues.length} dollar values detected after Amt. Paid for ${anchor.pbsPaymentId}`,
+        message: `Only ${postAmountCount} dollar values detected after Amt. Paid for ${anchor.pbsPaymentId}`,
         pbsPaymentId: anchor.pbsPaymentId,
-        textSnippet: blockText.slice(0, 240),
+        textSnippet: blockTextDisplay.slice(0, 240),
       });
     }
 
@@ -216,7 +238,7 @@ export function parseSummaryReport(
         severity: "warning",
         message: `Could not determine Sub Total for ${anchor.pbsPaymentId}`,
         pbsPaymentId: anchor.pbsPaymentId,
-        textSnippet: blockText.slice(0, 240),
+        textSnippet: blockTextDisplay.slice(0, 240),
       });
     }
 
@@ -239,7 +261,7 @@ export function parseSummaryReport(
       subtotal,
       incentives,
       total,
-      rawTextBlock: blockText,
+      rawTextBlock: blockTextDisplay,
       parseConfidence: confidence,
       parseWarnings: localWarnings,
     });
@@ -254,10 +276,21 @@ export function parseSummaryReport(
     });
   }
 
+  // Capture the report's grand total for validation only — never assign it
+  // to a record. Look for "Total Amt. Paid" followed by decimal tokens; the
+  // grand total is the largest value on that row.
+  let reportGrandTotal: number | undefined;
+  const grandTotalMatch = text.match(/Total\s*Amt\.?\s*Paid([\s\S]{0,240})/i);
+  if (grandTotalMatch) {
+    const tokens = extractMoneyValues(grandTotalMatch[1]);
+    if (tokens.length > 0) reportGrandTotal = Math.max(...tokens);
+  }
+
   return {
     entries,
     warnings,
     reportDate,
     bankReferences: [...bankReferences],
+    reportGrandTotal,
   };
 }
