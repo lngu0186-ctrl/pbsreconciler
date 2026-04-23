@@ -1,11 +1,5 @@
 import { create } from "zustand";
-import type {
-  AdviceEntry,
-  ReconResult,
-  SafetyNetEntry,
-  SummaryEntry,
-  UploadedFile,
-} from "@/types";
+import type { AdviceEntry, ReconResult, SafetyNetEntry, SummaryEntry, UploadedFile } from "@/types";
 import { reconcile } from "@/lib/reconcile";
 import { extractTextFromAny } from "@/lib/pdfText";
 import { detectDocumentType } from "@/parsers/detectType";

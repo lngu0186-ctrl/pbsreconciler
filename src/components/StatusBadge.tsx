@@ -1,10 +1,7 @@
 import type { ReconStatus } from "@/types";
 import { cn } from "@/lib/utils";
 
-const STATUS_META: Record<
-  ReconStatus,
-  { label: string; cls: string }
-> = {
+const STATUS_META: Record<ReconStatus, { label: string; cls: string }> = {
   balanced: { label: "Balanced", cls: "bg-success text-success-foreground" },
   minor: { label: "Minor diff", cls: "bg-warning text-warning-foreground" },
   mismatch: { label: "Mismatch", cls: "bg-destructive text-destructive-foreground" },

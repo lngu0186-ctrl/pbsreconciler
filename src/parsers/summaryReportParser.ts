@@ -80,7 +80,9 @@ export function parseSummaryReport(
     bankRefAtLine[i] = currentBank;
   }
 
-  const claimPeriodAtLine: (string | undefined)[] = new Array(lines.length).fill(documentClaimPeriod);
+  const claimPeriodAtLine: (string | undefined)[] = new Array(lines.length).fill(
+    documentClaimPeriod,
+  );
   let currentClaimPeriod = documentClaimPeriod;
   for (let i = 0; i < lines.length; i++) {
     const claimPeriod = extractClaimPeriod(lines[i]);
@@ -259,29 +261,24 @@ export function parseSummaryReport(
       amountsArrayRaw.length > 0 ? amountsArrayRaw[amountsArrayRaw.length - 1] : 0;
     const amtPaidFound = AMT_PAID_LABEL_RE.test(blockText);
     const subtotalFallbackUsed =
-      subtotal !== undefined &&
-      amountsArrayRaw[5] !== undefined &&
-      subtotal !== amountsArrayRaw[5];
+      subtotal !== undefined && amountsArrayRaw[5] !== undefined && subtotal !== amountsArrayRaw[5];
 
-    // eslint-disable-next-line no-console
     console.log(`[SummaryParser] ID: ${anchor.pbsPaymentId}`);
-    // eslint-disable-next-line no-console
-    console.log(
-      `[SummaryParser] Raw block: ${JSON.stringify(blockTextDisplay.slice(0, 200))}`,
-    );
-    // eslint-disable-next-line no-console
+
+    console.log(`[SummaryParser] Raw block: ${JSON.stringify(blockTextDisplay.slice(0, 200))}`);
+
     console.log(`[SummaryParser] Amt.Paid token found: ${amtPaidFound}`);
-    // eslint-disable-next-line no-console
+
     console.log(`[SummaryParser] Amt.Paid value: ${amountPaid}`);
-    // eslint-disable-next-line no-console
+
     console.log(`[SummaryParser] All decimals in block:`, allDecimalsInBlock);
-    // eslint-disable-next-line no-console
+
     console.log(`[SummaryParser] Decimals after Amt.Paid:`, amountsArrayRaw);
-    // eslint-disable-next-line no-console
+
     console.log(`[SummaryParser] amounts[5]: ${amountsPosition5}`);
-    // eslint-disable-next-line no-console
+
     console.log(`[SummaryParser] Last value: ${amountsLastValue}`);
-    // eslint-disable-next-line no-console
+
     console.log(
       `[SummaryParser] Subtotal assigned: ${subtotal}${subtotalFallbackUsed ? " (fallback)" : ""}`,
     );

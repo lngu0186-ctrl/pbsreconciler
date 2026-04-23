@@ -24,7 +24,9 @@ export function parseSafetyNet(
     if (idMatch) currentPbsId = idMatch[1];
 
     // Each row: claim ref, card issued, card holder, result, reason
-    const rowMatch = line.match(/(\d{6,})\s+(\d{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})\s+(.+?)\s+(Approved|Rejected|Paid|Not Paid)\s*(.*)$/i);
+    const rowMatch = line.match(
+      /(\d{6,})\s+(\d{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})\s+(.+?)\s+(Approved|Rejected|Paid|Not Paid)\s*(.*)$/i,
+    );
     if (rowMatch) {
       entries.push({
         id: uid("sn_"),

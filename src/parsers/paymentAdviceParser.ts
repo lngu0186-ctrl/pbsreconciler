@@ -161,9 +161,10 @@ export function parsePaymentAdvice(
     const start = Math.max(0, uniquePositions[i].index - lookbehind);
     // Don't let lookbehind reach into the previous block
     const safeStart =
-      i > 0 ? Math.max(start, uniquePositions[i - 1].index + uniquePositions[i - 1].id.length) : start;
-    const end =
-      i + 1 < uniquePositions.length ? uniquePositions[i + 1].index : text.length;
+      i > 0
+        ? Math.max(start, uniquePositions[i - 1].index + uniquePositions[i - 1].id.length)
+        : start;
+    const end = i + 1 < uniquePositions.length ? uniquePositions[i + 1].index : text.length;
 
     const block = text.slice(safeStart, end);
     const blockLines = block.split(/\r?\n/);
