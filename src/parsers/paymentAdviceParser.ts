@@ -161,8 +161,12 @@ export function parsePaymentAdvice(
     let acssTwoCount: number | undefined;
     let acssTwoAmount: number | undefined;
 
-    // Bank reference: prefer "Bank Ref(erence)" labelled value within block
-    const refLabel = block.match(/Bank\s*Ref(?:erence)?[^\n]*?(\d{10,15})/i);
+    // Bank reference: prefer "Bank Ref(erence)" labelled value within block.
+    // Match BOTH the Z Dispense format ("Bank Ref. Number 12345") AND the
+    // Medicare format ("Bank reference number: 12345").
+    const refLabel =
+      block.match(/Bank\s*reference\s*number[:\s]+(\d{9,15})/i) ||
+      block.match(/Bank\s*Ref(?:erence)?\.?\s*(?:Number|No\.?)?[:\s]*?(\d{9,15})/i);
     if (refLabel && refLabel[1] !== pbsPaymentId) {
       bankReferenceNumber = refLabel[1];
     } else {
