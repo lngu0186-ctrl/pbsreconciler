@@ -40,12 +40,12 @@ export const useAppStore = create<AppState>((set, get) => ({
   isProcessing: false,
 
   loadDemo: () => {
-    const { files, summaries, advices } = buildDemoData();
+    const { files, summaries, advices, safetyNet } = buildDemoData();
     set({
       files,
       summaries,
       advices,
-      safetyNet: [],
+      safetyNet,
       results: reconcile(summaries, advices),
     });
   },
