@@ -92,6 +92,8 @@ export function parseSummaryReport(
   for (let i = 0; i < lines.length; i++) {
     const match = lines[i].match(PBS_ID_RE);
     if (!match || !match[1].startsWith("100")) continue;
+    // Never treat a grand-total / footer row as a PBS Payment ID record
+    if (GRAND_TOTAL_RE.test(lines[i])) continue;
 
     anchors.push({
       lineIdx: i,
