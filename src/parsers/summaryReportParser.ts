@@ -17,6 +17,7 @@ export interface SummaryParseResult {
   warnings: ParseWarning[];
   reportDate?: string;
   bankReferences: string[];
+  reportGrandTotal?: number;
 }
 
 interface IdAnchor {
