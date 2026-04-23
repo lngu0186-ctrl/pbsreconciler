@@ -537,7 +537,7 @@ export function FilesTab() {
         </thead>
         <tbody className="divide-y divide-border">
           {files.map((f) => (
-            <React.Fragment key={f.id}>
+            <Fragment key={f.id}>
               <tr key={f.id}>
                 <td className="px-2 py-1.5">
                   <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => toggle(f.id)}>
