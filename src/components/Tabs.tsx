@@ -931,7 +931,7 @@ export function WarningsTab() {
                   <th>Amt.Paid found</th>
                   <th className="text-right">Amt.Paid value</th>
                   <th className="min-w-[220px]">Amounts array (raw)</th>
-                  <th className="text-right">amounts[5]</th>
+                  <th className="text-right">amounts[4]</th>
                   <th className="text-right">Last value</th>
                   <th className="text-right">Subtotal assigned</th>
                   <th className="text-right">Confidence</th>
@@ -951,7 +951,7 @@ export function WarningsTab() {
                       <td className="px-2 py-1.5 whitespace-pre-wrap break-words">
                         {d ? JSON.stringify(d.amountsArrayRaw) : "—"}
                       </td>
-                      <td className="px-2 py-1.5 text-right">{d ? d.amountsPosition5 : "—"}</td>
+                      <td className="px-2 py-1.5 text-right">{d ? d.amountsPosition4 : "—"}</td>
                       <td className="px-2 py-1.5 text-right">{d ? d.amountsLastValue : "—"}</td>
                       <td className="px-2 py-1.5 text-right">
                         {s.subtotal ?? "—"}

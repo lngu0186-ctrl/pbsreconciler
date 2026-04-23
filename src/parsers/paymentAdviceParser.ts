@@ -144,13 +144,19 @@ export function parsePaymentAdvice(
   }
 
   // De-duplicate header references that repeat the same ID right next to itself
-  const uniquePositions: { id: string; index: number }[] = [];
+  const dedupedPositions: { id: string; index: number }[] = [];
   for (let i = 0; i < matches.length; i++) {
     const cur = matches[i];
-    const prev = uniquePositions[uniquePositions.length - 1];
+    const prev = dedupedPositions[dedupedPositions.length - 1];
     if (prev && prev.id === cur.id && cur.index - prev.index < 200) continue;
-    uniquePositions.push(cur);
+    dedupedPositions.push(cur);
   }
+
+  // Final guard: drop any candidate that collides with a known bank reference
+  // captured from this document (e.g. the document-level Medicare bank ref).
+  // This prevents bank reference numbers that happen to match /1003\d{8}/
+  // from creating spurious block boundaries.
+  const uniquePositions = dedupedPositions.filter((pos) => !bankReferences.has(pos.id));
 
   for (let i = 0; i < uniquePositions.length; i++) {
     const pbsPaymentId = uniquePositions[i].id;

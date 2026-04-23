@@ -256,7 +256,7 @@ export function parseSummaryReport(
 
     const allDecimalsInBlock = extractMoneyValues(blockText);
     const amountsArrayRaw = amountTokens.length > 0 ? amountTokens.slice(1) : [];
-    const amountsPosition5 = amountsArrayRaw[5] ?? 0;
+    const amountsPosition4 = amountsArrayRaw[4] ?? 0;
     const amountsLastValue =
       amountsArrayRaw.length > 0 ? amountsArrayRaw[amountsArrayRaw.length - 1] : 0;
     const amtPaidFound = AMT_PAID_LABEL_RE.test(blockText);
@@ -275,7 +275,7 @@ export function parseSummaryReport(
 
     console.log(`[SummaryParser] Decimals after Amt.Paid:`, amountsArrayRaw);
 
-    console.log(`[SummaryParser] amounts[5]: ${amountsPosition5}`);
+    console.log(`[SummaryParser] amounts[4]: ${amountsPosition4}`);
 
     console.log(`[SummaryParser] Last value: ${amountsLastValue}`);
 
@@ -310,7 +310,7 @@ export function parseSummaryReport(
         amtPaidFound,
         amtPaidValue: amountPaid ?? 0,
         amountsArrayRaw,
-        amountsPosition5,
+        amountsPosition4,
         amountsLastValue,
         subtotalFallbackUsed,
         allDecimalsInBlock,
