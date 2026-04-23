@@ -70,6 +70,9 @@ function Index() {
             <TabsContent value="warnings">
               <WarningsTab />
             </TabsContent>
+            <TabsContent value="diagnostics">
+              <DiagnosticsTab />
+            </TabsContent>
           </Tabs>
         </main>
       </div>
