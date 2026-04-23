@@ -192,23 +192,25 @@ export function parseSummaryReport(
       }
     }
 
+    const postAmountCount = Math.max(0, amountTokens.length - 1);
+
     if (!AMT_PAID_LABEL_RE.test(blockText)) {
       localWarnings.push({
         type: "missing-amt-paid",
         severity: "warning",
         message: `Could not locate Amt. Paid for ${anchor.pbsPaymentId}`,
         pbsPaymentId: anchor.pbsPaymentId,
-        textSnippet: blockText.slice(0, 240),
+        textSnippet: blockTextDisplay.slice(0, 240),
       });
     }
 
-    if (postAmountValues.length < 3) {
+    if (postAmountCount < 3) {
       localWarnings.push({
         type: "incomplete-row",
         severity: "warning",
-        message: `Only ${postAmountValues.length} dollar values detected after Amt. Paid for ${anchor.pbsPaymentId}`,
+        message: `Only ${postAmountCount} dollar values detected after Amt. Paid for ${anchor.pbsPaymentId}`,
         pbsPaymentId: anchor.pbsPaymentId,
-        textSnippet: blockText.slice(0, 240),
+        textSnippet: blockTextDisplay.slice(0, 240),
       });
     }
 
