@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment as Frag, useMemo, useState } from "react";
 import { useAppStore } from "@/store/appStore";
 import { KpiCard } from "@/components/KpiCard";
 import { StatusBadge, STATUS_LABELS } from "@/components/StatusBadge";
