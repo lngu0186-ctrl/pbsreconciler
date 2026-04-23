@@ -254,8 +254,6 @@ export function parseSummaryReport(
     });
   }
 
-  void doctorsBagBenefits;
-
   return {
     entries,
     warnings,
