@@ -49,6 +49,16 @@ export interface SummaryEntry {
   rawTextBlock?: string;
   parseConfidence: number;
   parseWarnings: ParseWarning[];
+  _debug?: {
+    rawBlockPreview: string;
+    amtPaidFound: boolean;
+    amtPaidValue: number;
+    amountsArrayRaw: number[];
+    amountsPosition5: number;
+    amountsLastValue: number;
+    subtotalFallbackUsed: boolean;
+    allDecimalsInBlock: number[];
+  };
 }
 
 export interface AdviceEntry {
