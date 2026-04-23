@@ -30,13 +30,25 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Hugh's PBS Claim Reconciliation App" },
-      { name: "description", content: "Australian community pharmacy PBS reconciliation tool — reconcile Z Dispense reports with Medicare PBS Payment Advice PDFs." },
+      {
+        name: "description",
+        content:
+          "Australian community pharmacy PBS reconciliation tool — reconcile Z Dispense reports with Medicare PBS Payment Advice PDFs.",
+      },
       { property: "og:title", content: "Hugh's PBS Claim Reconciliation App" },
-      { property: "og:description", content: "Australian community pharmacy PBS reconciliation tool — reconcile Z Dispense reports with Medicare PBS Payment Advice PDFs." },
+      {
+        property: "og:description",
+        content:
+          "Australian community pharmacy PBS reconciliation tool — reconcile Z Dispense reports with Medicare PBS Payment Advice PDFs.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:title", content: "Hugh's PBS Claim Reconciliation App" },
-      { name: "twitter:description", content: "Australian community pharmacy PBS reconciliation tool — reconcile Z Dispense reports with Medicare PBS Payment Advice PDFs." },
+      {
+        name: "twitter:description",
+        content:
+          "Australian community pharmacy PBS reconciliation tool — reconcile Z Dispense reports with Medicare PBS Payment Advice PDFs.",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

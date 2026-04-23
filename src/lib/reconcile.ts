@@ -1,9 +1,4 @@
-import type {
-  AdviceEntry,
-  ReconResult,
-  ReconStatus,
-  SummaryEntry,
-} from "@/types";
+import type { AdviceEntry, ReconResult, ReconStatus, SummaryEntry } from "@/types";
 
 const BALANCED_THRESHOLD = 0.02;
 const MINOR_THRESHOLD = 1.0;
@@ -17,10 +12,7 @@ export function adviceAcssTotal(a: AdviceEntry): number {
   return (a.acssComponentOneAmount ?? 0) + (a.acssComponentTwoAmount ?? 0);
 }
 
-export function reconcile(
-  summaries: SummaryEntry[],
-  advices: AdviceEntry[],
-): ReconResult[] {
+export function reconcile(summaries: SummaryEntry[], advices: AdviceEntry[]): ReconResult[] {
   const byIdSummary = new Map<string, SummaryEntry[]>();
   const byIdAdvice = new Map<string, AdviceEntry[]>();
   for (const s of summaries) {
@@ -66,8 +58,7 @@ export function reconcile(
     } else {
       // both present
       const lowConf =
-        sList.some((s) => s.parseConfidence < 0.6) ||
-        aList.some((a) => a.parseConfidence < 0.6);
+        sList.some((s) => s.parseConfidence < 0.6) || aList.some((a) => a.parseConfidence < 0.6);
       difference = +(sumAdviceComparable - sumSummary).toFixed(2);
       const abs = Math.abs(difference);
       if (lowConf) {
@@ -129,6 +120,8 @@ export function reconcile(
     adjustment: 5,
     balanced: 6,
   };
-  results.sort((a, b) => order[a.status] - order[b.status] || a.pbsPaymentId.localeCompare(b.pbsPaymentId));
+  results.sort(
+    (a, b) => order[a.status] - order[b.status] || a.pbsPaymentId.localeCompare(b.pbsPaymentId),
+  );
   return results;
 }

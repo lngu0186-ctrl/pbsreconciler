@@ -56,13 +56,27 @@ function Index() {
               <TabsTrigger value="safety">Safety Net</TabsTrigger>
               <TabsTrigger value="warnings">Parse Warnings</TabsTrigger>
             </TabsList>
-            <TabsContent value="overview"><OverviewTab /></TabsContent>
-            <TabsContent value="matched"><MatchedTab /></TabsContent>
-            <TabsContent value="unmatched"><UnmatchedTab /></TabsContent>
-            <TabsContent value="bank"><BankDepositsTab /></TabsContent>
-            <TabsContent value="files"><FilesTab /></TabsContent>
-            <TabsContent value="safety"><SafetyNetTab /></TabsContent>
-            <TabsContent value="warnings"><WarningsTab /></TabsContent>
+            <TabsContent value="overview">
+              <OverviewTab />
+            </TabsContent>
+            <TabsContent value="matched">
+              <MatchedTab />
+            </TabsContent>
+            <TabsContent value="unmatched">
+              <UnmatchedTab />
+            </TabsContent>
+            <TabsContent value="bank">
+              <BankDepositsTab />
+            </TabsContent>
+            <TabsContent value="files">
+              <FilesTab />
+            </TabsContent>
+            <TabsContent value="safety">
+              <SafetyNetTab />
+            </TabsContent>
+            <TabsContent value="warnings">
+              <WarningsTab />
+            </TabsContent>
           </Tabs>
         </main>
       </div>

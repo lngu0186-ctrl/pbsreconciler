@@ -97,8 +97,13 @@ export function OverviewTab() {
 
   const counts = useMemo(() => {
     const c: Record<ReconStatus, number> = {
-      balanced: 0, minor: 0, mismatch: 0, pending: 0,
-      adviceOnly: 0, adjustment: 0, parseIssue: 0,
+      balanced: 0,
+      minor: 0,
+      mismatch: 0,
+      pending: 0,
+      adviceOnly: 0,
+      adjustment: 0,
+      parseIssue: 0,
     };
     for (const r of results) c[r.status]++;
     return c;
@@ -124,30 +129,45 @@ export function OverviewTab() {
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <KpiCard title="Expected subtotal (Summary)" value={formatAUD(totals.sumExpected)} />
-        <KpiCard title="Comparable advice total" value={formatAUD(totals.sumAdvice)} hint="Total PBS + RPBS where present" />
-        <KpiCard title="Banked total (incl. ACSS)" value={formatAUD(totals.sumBanked)} tone="info" />
+        <KpiCard
+          title="Comparable advice total"
+          value={formatAUD(totals.sumAdvice)}
+          hint="Total PBS + RPBS where present"
+        />
+        <KpiCard
+          title="Banked total (incl. ACSS)"
+          value={formatAUD(totals.sumBanked)}
+          tone="info"
+        />
       </div>
 
       {counts.mismatch > 0 && (
         <Banner tone="destructive" icon={<AlertTriangle className="h-4 w-4" />}>
-          <strong>{counts.mismatch}</strong> reconciliation mismatch(es) detected. Review the Matched tab.
+          <strong>{counts.mismatch}</strong> reconciliation mismatch(es) detected. Review the
+          Matched tab.
         </Banner>
       )}
       {counts.pending > 0 && (
         <Banner tone="info" icon={<Clock className="h-4 w-4" />}>
-          <strong>{counts.pending}</strong> PBS payment ID(s) awaiting Medicare advice. This is normal for very recent claim periods.
+          <strong>{counts.pending}</strong> PBS payment ID(s) awaiting Medicare advice. This is
+          normal for very recent claim periods.
         </Banner>
       )}
       {counts.parseIssue > 0 && (
         <Banner tone="warning" icon={<FileWarning className="h-4 w-4" />}>
-          <strong>{counts.parseIssue}</strong> record(s) parsed with low confidence. Review the Parse Warnings tab.
+          <strong>{counts.parseIssue}</strong> record(s) parsed with low confidence. Review the
+          Parse Warnings tab.
         </Banner>
       )}
 
       <Card className="overflow-hidden border-border/60">
         <div className="flex items-center justify-between border-b border-border bg-muted/30 px-3 py-2">
           <div className="text-sm font-semibold">Reconciliation overview</div>
-          <Button variant="outline" size="sm" onClick={() => downloadCsv("pbs_recon_overview.csv", exportRowsForResults(results))}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => downloadCsv("pbs_recon_overview.csv", exportRowsForResults(results))}
+          >
             <Download className="mr-1.5 h-3.5 w-3.5" />
             Export CSV
           </Button>
@@ -161,12 +181,25 @@ export function OverviewTab() {
           How reconciliation works
         </div>
         <ul className="ml-5 list-disc space-y-1 text-xs text-muted-foreground">
-          <li>Records are matched by <Mono>PBS payment ID</Mono>.</li>
-          <li>The summary <em>subtotal</em> is compared to the advice <em>Total PBS</em> (or <em>Total PBS + RPBS</em> when present).</li>
-          <li>ACSS dispensing fees are added by Medicare on top — they're excluded from the core subtotal match but included in the banked total.</li>
-          <li>Differences under <Mono>$0.02</Mono> are Balanced. Under <Mono>$1.00</Mono> are Minor (often General Under-Co split). Above that is a Mismatch.</li>
+          <li>
+            Records are matched by <Mono>PBS payment ID</Mono>.
+          </li>
+          <li>
+            The summary <em>subtotal</em> is compared to the advice <em>Total PBS</em> (or{" "}
+            <em>Total PBS + RPBS</em> when present).
+          </li>
+          <li>
+            ACSS dispensing fees are added by Medicare on top — they're excluded from the core
+            subtotal match but included in the banked total.
+          </li>
+          <li>
+            Differences under <Mono>$0.02</Mono> are Balanced. Under <Mono>$1.00</Mono> are Minor
+            (often General Under-Co split). Above that is a Mismatch.
+          </li>
           <li>Older-period or negative entries are flagged as Adjustments.</li>
-          <li>Safety Net statements live in their own tab and are not mixed into PBS claim totals.</li>
+          <li>
+            Safety Net statements live in their own tab and are not mixed into PBS claim totals.
+          </li>
         </ul>
       </Card>
     </div>
@@ -197,7 +230,9 @@ function Banner({
 
 function ResultsTable({ rows, onSelect }: { rows: ReconResult[]; onSelect: (id: string) => void }) {
   if (rows.length === 0) {
-    return <div className="p-6 text-center text-sm text-muted-foreground">No records to display.</div>;
+    return (
+      <div className="p-6 text-center text-sm text-muted-foreground">No records to display.</div>
+    );
   }
   return (
     <div className="max-h-[60vh] overflow-auto">
@@ -221,18 +256,36 @@ function ResultsTable({ rows, onSelect }: { rows: ReconResult[]; onSelect: (id: 
               className="cursor-pointer hover:bg-muted/40"
               onClick={() => onSelect(r.pbsPaymentId)}
             >
-              <td className="px-3 py-1.5"><Mono>{r.pbsPaymentId}</Mono></td>
-              <td className="px-3 py-1.5"><Mono>{r.claimPeriodFromSummary || r.claimPeriodFromAdvice || "—"}</Mono></td>
-              <td className="px-3 py-1.5"><Mono>{r.bankReferenceSummary || r.bankReferenceAdvice || "—"}</Mono></td>
-              <td className="px-3 py-1.5 text-right tabular-nums">{r.summarySubtotal !== undefined ? formatAUD(r.summarySubtotal) : "—"}</td>
-              <td className="px-3 py-1.5 text-right tabular-nums">{r.adviceComparableTotal !== undefined ? formatAUD(r.adviceComparableTotal) : "—"}</td>
-              <td className={`px-3 py-1.5 text-right tabular-nums ${
-                r.difference !== undefined && Math.abs(r.difference) >= 1 ? "text-destructive font-semibold" : ""
-              }`}>
+              <td className="px-3 py-1.5">
+                <Mono>{r.pbsPaymentId}</Mono>
+              </td>
+              <td className="px-3 py-1.5">
+                <Mono>{r.claimPeriodFromSummary || r.claimPeriodFromAdvice || "—"}</Mono>
+              </td>
+              <td className="px-3 py-1.5">
+                <Mono>{r.bankReferenceSummary || r.bankReferenceAdvice || "—"}</Mono>
+              </td>
+              <td className="px-3 py-1.5 text-right tabular-nums">
+                {r.summarySubtotal !== undefined ? formatAUD(r.summarySubtotal) : "—"}
+              </td>
+              <td className="px-3 py-1.5 text-right tabular-nums">
+                {r.adviceComparableTotal !== undefined ? formatAUD(r.adviceComparableTotal) : "—"}
+              </td>
+              <td
+                className={`px-3 py-1.5 text-right tabular-nums ${
+                  r.difference !== undefined && Math.abs(r.difference) >= 1
+                    ? "text-destructive font-semibold"
+                    : ""
+                }`}
+              >
                 {r.difference !== undefined ? formatSignedAUD(r.difference) : "—"}
               </td>
-              <td className="px-3 py-1.5 text-right tabular-nums">{r.bankedTotal !== undefined ? formatAUD(r.bankedTotal) : "—"}</td>
-              <td className="px-3 py-1.5"><StatusBadge status={r.status} /></td>
+              <td className="px-3 py-1.5 text-right tabular-nums">
+                {r.bankedTotal !== undefined ? formatAUD(r.bankedTotal) : "—"}
+              </td>
+              <td className="px-3 py-1.5">
+                <StatusBadge status={r.status} />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -245,9 +298,7 @@ function ResultsTable({ rows, onSelect }: { rows: ReconResult[]; onSelect: (id: 
 export function MatchedTab() {
   const select = useAppStore((s) => s.selectPbs);
   const { search, setSearch, filter, setFilter, filtered } = useFilteredResults();
-  const matched = filtered.filter(
-    (r) => r.summaryRecord && r.adviceRecord,
-  );
+  const matched = filtered.filter((r) => r.summaryRecord && r.adviceRecord);
   return (
     <div className="space-y-3">
       <Toolbar
@@ -281,23 +332,57 @@ export function MatchedTab() {
             </thead>
             <tbody className="divide-y divide-border">
               {matched.map((r) => (
-                <tr key={r.pbsPaymentId} className="cursor-pointer hover:bg-muted/40" onClick={() => select(r.pbsPaymentId)}>
-                  <td className="px-2 py-1.5"><Mono>{r.pbsPaymentId}</Mono></td>
-                  <td className="px-2 py-1.5"><Mono>{r.claimPeriodFromSummary ?? "—"}</Mono></td>
-                  <td className="px-2 py-1.5"><Mono>{r.claimPeriodFromAdvice ?? "—"}</Mono></td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{formatAUD(r.summaryRecord?.generalBenefits)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{formatAUD(r.summaryRecord?.concessionalBenefits)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{formatAUD(r.summaryRecord?.entitlementBenefits)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{formatAUD(r.summaryRecord?.repatriationBenefits)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums font-medium">{formatAUD(r.summarySubtotal)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{formatAUD(r.adviceTotalPBS)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{r.adviceTotalPBSPlusRPBS !== undefined ? formatAUD(r.adviceTotalPBSPlusRPBS) : "—"}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">{formatAUD(r.acssTotal)}</td>
-                  <td className="px-2 py-1.5 text-right tabular-nums">{formatAUD(r.bankedTotal)}</td>
-                  <td className={`px-2 py-1.5 text-right tabular-nums ${r.difference !== undefined && Math.abs(r.difference) >= 1 ? "text-destructive font-semibold" : ""}`}>
+                <tr
+                  key={r.pbsPaymentId}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => select(r.pbsPaymentId)}
+                >
+                  <td className="px-2 py-1.5">
+                    <Mono>{r.pbsPaymentId}</Mono>
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <Mono>{r.claimPeriodFromSummary ?? "—"}</Mono>
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <Mono>{r.claimPeriodFromAdvice ?? "—"}</Mono>
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.summaryRecord?.generalBenefits)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.summaryRecord?.concessionalBenefits)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.summaryRecord?.entitlementBenefits)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.summaryRecord?.repatriationBenefits)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums font-medium">
+                    {formatAUD(r.summarySubtotal)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.adviceTotalPBS)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {r.adviceTotalPBSPlusRPBS !== undefined
+                      ? formatAUD(r.adviceTotalPBSPlusRPBS)
+                      : "—"}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums text-muted-foreground">
+                    {formatAUD(r.acssTotal)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.bankedTotal)}
+                  </td>
+                  <td
+                    className={`px-2 py-1.5 text-right tabular-nums ${r.difference !== undefined && Math.abs(r.difference) >= 1 ? "text-destructive font-semibold" : ""}`}
+                  >
                     {r.difference !== undefined ? formatSignedAUD(r.difference) : "—"}
                   </td>
-                  <td className="px-2 py-1.5"><StatusBadge status={r.status} /></td>
+                  <td className="px-2 py-1.5">
+                    <StatusBadge status={r.status} />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -312,7 +397,12 @@ export function MatchedTab() {
 }
 
 function Toolbar({
-  search, setSearch, filter, setFilter, onExport, exportLabel,
+  search,
+  setSearch,
+  filter,
+  setFilter,
+  onExport,
+  exportLabel,
 }: {
   search: string;
   setSearch: (v: string) => void;
@@ -354,28 +444,56 @@ export function UnmatchedTab() {
       <Card className="overflow-hidden border-border/60">
         <div className="flex items-center justify-between border-b border-border bg-muted/30 px-3 py-2">
           <div className="text-sm font-semibold">In Summary only ({inSummaryOnly.length})</div>
-          <Button variant="outline" size="sm" onClick={() => downloadCsv("pbs_summary_only.csv", exportRowsForResults(inSummaryOnly))}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => downloadCsv("pbs_summary_only.csv", exportRowsForResults(inSummaryOnly))}
+          >
             <Download className="mr-1.5 h-3.5 w-3.5" /> Export
           </Button>
         </div>
         {inSummaryOnly.length === 0 ? (
-          <div className="p-6 text-center text-sm text-muted-foreground">All summary IDs have matching advice. ✓</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            All summary IDs have matching advice. ✓
+          </div>
         ) : (
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
               <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
-                <th>PBS ID</th><th>Period</th><th>Bank ref</th><th className="text-right">Rx</th><th className="text-right">Amt paid</th><th className="text-right">Subtotal</th><th>Likely reason</th>
+                <th>PBS ID</th>
+                <th>Period</th>
+                <th>Bank ref</th>
+                <th className="text-right">Rx</th>
+                <th className="text-right">Amt paid</th>
+                <th className="text-right">Subtotal</th>
+                <th>Likely reason</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {inSummaryOnly.map((r) => (
-                <tr key={r.pbsPaymentId} className="cursor-pointer hover:bg-muted/40" onClick={() => select(r.pbsPaymentId)}>
-                  <td className="px-3 py-1.5"><Mono>{r.pbsPaymentId}</Mono></td>
-                  <td className="px-3 py-1.5"><Mono>{r.claimPeriodFromSummary ?? "—"}</Mono></td>
-                  <td className="px-3 py-1.5"><Mono>{r.bankReferenceSummary ?? "—"}</Mono></td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{formatNumber(r.summaryRecord?.rxTransactions)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{formatAUD(r.summaryRecord?.amountPaid)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{formatAUD(r.summarySubtotal)}</td>
+                <tr
+                  key={r.pbsPaymentId}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => select(r.pbsPaymentId)}
+                >
+                  <td className="px-3 py-1.5">
+                    <Mono>{r.pbsPaymentId}</Mono>
+                  </td>
+                  <td className="px-3 py-1.5">
+                    <Mono>{r.claimPeriodFromSummary ?? "—"}</Mono>
+                  </td>
+                  <td className="px-3 py-1.5">
+                    <Mono>{r.bankReferenceSummary ?? "—"}</Mono>
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">
+                    {formatNumber(r.summaryRecord?.rxTransactions)}
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.summaryRecord?.amountPaid)}
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.summarySubtotal)}
+                  </td>
                   <td className="px-3 py-1.5 text-muted-foreground">Awaiting Medicare advice</td>
                 </tr>
               ))}
@@ -387,29 +505,56 @@ export function UnmatchedTab() {
       <Card className="overflow-hidden border-border/60">
         <div className="flex items-center justify-between border-b border-border bg-muted/30 px-3 py-2">
           <div className="text-sm font-semibold">In Advice only ({inAdviceOnly.length})</div>
-          <Button variant="outline" size="sm" onClick={() => downloadCsv("pbs_advice_only.csv", exportRowsForResults(inAdviceOnly))}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => downloadCsv("pbs_advice_only.csv", exportRowsForResults(inAdviceOnly))}
+          >
             <Download className="mr-1.5 h-3.5 w-3.5" /> Export
           </Button>
         </div>
         {inAdviceOnly.length === 0 ? (
-          <div className="p-6 text-center text-sm text-muted-foreground">All advice IDs are present in the summary. ✓</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            All advice IDs are present in the summary. ✓
+          </div>
         ) : (
           <table className="w-full text-xs">
             <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
               <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
-                <th>PBS ID</th><th>Period</th><th>Bank ref</th><th className="text-right">Comparable</th><th className="text-right">Banked</th><th>Likely reason</th>
+                <th>PBS ID</th>
+                <th>Period</th>
+                <th>Bank ref</th>
+                <th className="text-right">Comparable</th>
+                <th className="text-right">Banked</th>
+                <th>Likely reason</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {inAdviceOnly.map((r) => (
-                <tr key={r.pbsPaymentId} className="cursor-pointer hover:bg-muted/40" onClick={() => select(r.pbsPaymentId)}>
-                  <td className="px-3 py-1.5"><Mono>{r.pbsPaymentId}</Mono></td>
-                  <td className="px-3 py-1.5"><Mono>{r.claimPeriodFromAdvice ?? "—"}</Mono></td>
-                  <td className="px-3 py-1.5"><Mono>{r.bankReferenceAdvice ?? "—"}</Mono></td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{formatAUD(r.adviceComparableTotal)}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{formatAUD(r.bankedTotal)}</td>
+                <tr
+                  key={r.pbsPaymentId}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => select(r.pbsPaymentId)}
+                >
+                  <td className="px-3 py-1.5">
+                    <Mono>{r.pbsPaymentId}</Mono>
+                  </td>
+                  <td className="px-3 py-1.5">
+                    <Mono>{r.claimPeriodFromAdvice ?? "—"}</Mono>
+                  </td>
+                  <td className="px-3 py-1.5">
+                    <Mono>{r.bankReferenceAdvice ?? "—"}</Mono>
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.adviceComparableTotal)}
+                  </td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">
+                    {formatAUD(r.bankedTotal)}
+                  </td>
                   <td className="px-3 py-1.5 text-muted-foreground">
-                    {r.status === "adjustment" ? "Older-period adjustment / reversal" : "Genuinely unmatched — investigate"}
+                    {r.status === "adjustment"
+                      ? "Older-period adjustment / reversal"
+                      : "Genuinely unmatched — investigate"}
                   </td>
                 </tr>
               ))}
@@ -428,7 +573,10 @@ export function BankDepositsTab() {
   const select = useAppStore((s) => s.selectPbs);
 
   const groups = useMemo(() => {
-    const map = new Map<string, { results: ReconResult[]; paymentDates: Set<string>; files: Set<string> }>();
+    const map = new Map<
+      string,
+      { results: ReconResult[]; paymentDates: Set<string>; files: Set<string> }
+    >();
     for (const r of results) {
       const key = r.bankReferenceAdvice || r.bankReferenceSummary || "—";
       if (!map.has(key)) map.set(key, { results: [], paymentDates: new Set(), files: new Set() });
@@ -459,7 +607,11 @@ export function BankDepositsTab() {
         <div className="text-xs text-muted-foreground">
           {groups.length} bank deposit group(s) · {advices.length} advice record(s)
         </div>
-        <Button variant="outline" size="sm" onClick={() => downloadCsv("pbs_bank_deposits.csv", exportRows)}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => downloadCsv("pbs_bank_deposits.csv", exportRows)}
+        >
           <Download className="mr-1.5 h-3.5 w-3.5" /> Export bank deposits
         </Button>
       </div>
@@ -478,26 +630,53 @@ export function BankDepositsTab() {
                 {[...g.paymentDates].join(", ") || "—"} · {g.results.length} ID(s)
               </div>
               <div className="ml-auto flex items-center gap-4 tabular-nums">
-                <span>Comparable <strong>{formatAUD(sumComp)}</strong></span>
-                <span className="text-muted-foreground">ACSS <strong>{formatAUD(sumAcss)}</strong></span>
-                <span>Banked <strong className="text-info">{formatAUD(sumBanked)}</strong></span>
+                <span>
+                  Comparable <strong>{formatAUD(sumComp)}</strong>
+                </span>
+                <span className="text-muted-foreground">
+                  ACSS <strong>{formatAUD(sumAcss)}</strong>
+                </span>
+                <span>
+                  Banked <strong className="text-info">{formatAUD(sumBanked)}</strong>
+                </span>
               </div>
             </div>
             <table className="w-full text-xs">
               <thead className="bg-muted/30 text-left uppercase tracking-wide text-muted-foreground">
                 <tr className="[&>th]:px-3 [&>th]:py-1.5 [&>th]:font-medium">
-                  <th>PBS ID</th><th>Period</th><th className="text-right">Comparable</th><th className="text-right">ACSS</th><th className="text-right">Banked</th><th>Status</th>
+                  <th>PBS ID</th>
+                  <th>Period</th>
+                  <th className="text-right">Comparable</th>
+                  <th className="text-right">ACSS</th>
+                  <th className="text-right">Banked</th>
+                  <th>Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {g.results.map((r) => (
-                  <tr key={r.pbsPaymentId} className="cursor-pointer hover:bg-muted/40" onClick={() => select(r.pbsPaymentId)}>
-                    <td className="px-3 py-1.5"><Mono>{r.pbsPaymentId}</Mono></td>
-                    <td className="px-3 py-1.5"><Mono>{r.claimPeriodFromAdvice || r.claimPeriodFromSummary || "—"}</Mono></td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{formatAUD(r.adviceComparableTotal)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{formatAUD(r.acssTotal)}</td>
-                    <td className="px-3 py-1.5 text-right tabular-nums">{formatAUD(r.bankedTotal)}</td>
-                    <td className="px-3 py-1.5"><StatusBadge status={r.status} /></td>
+                  <tr
+                    key={r.pbsPaymentId}
+                    className="cursor-pointer hover:bg-muted/40"
+                    onClick={() => select(r.pbsPaymentId)}
+                  >
+                    <td className="px-3 py-1.5">
+                      <Mono>{r.pbsPaymentId}</Mono>
+                    </td>
+                    <td className="px-3 py-1.5">
+                      <Mono>{r.claimPeriodFromAdvice || r.claimPeriodFromSummary || "—"}</Mono>
+                    </td>
+                    <td className="px-3 py-1.5 text-right tabular-nums">
+                      {formatAUD(r.adviceComparableTotal)}
+                    </td>
+                    <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">
+                      {formatAUD(r.acssTotal)}
+                    </td>
+                    <td className="px-3 py-1.5 text-right tabular-nums">
+                      {formatAUD(r.bankedTotal)}
+                    </td>
+                    <td className="px-3 py-1.5">
+                      <StatusBadge status={r.status} />
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -506,7 +685,9 @@ export function BankDepositsTab() {
         );
       })}
       {groups.length === 0 && (
-        <Card className="border-border/60 p-6 text-center text-sm text-muted-foreground">No bank deposit groups.</Card>
+        <Card className="border-border/60 p-6 text-center text-sm text-muted-foreground">
+          No bank deposit groups.
+        </Card>
       )}
     </div>
   );
@@ -532,7 +713,15 @@ export function FilesTab() {
       <table className="w-full text-xs">
         <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
           <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
-            <th></th><th>File</th><th>Type</th><th>Supplier</th><th>Date</th><th>Bank refs</th><th className="text-right">Records</th><th className="text-right">Confidence</th><th className="text-right">Warnings</th>
+            <th></th>
+            <th>File</th>
+            <th>Type</th>
+            <th>Supplier</th>
+            <th>Date</th>
+            <th>Bank refs</th>
+            <th className="text-right">Records</th>
+            <th className="text-right">Confidence</th>
+            <th className="text-right">Warnings</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
@@ -540,26 +729,45 @@ export function FilesTab() {
             <Frag key={f.id}>
               <tr key={f.id}>
                 <td className="px-2 py-1.5">
-                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => toggle(f.id)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-[10px]"
+                    onClick={() => toggle(f.id)}
+                  >
                     {expanded.has(f.id) ? "▼" : "▶"}
                   </Button>
                 </td>
-                <td className="px-3 py-1.5"><span className="font-medium">{f.name}</span></td>
                 <td className="px-3 py-1.5">
-                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">{f.detectedType}</span>
+                  <span className="font-medium">{f.name}</span>
                 </td>
-                <td className="px-3 py-1.5"><Mono>{f.supplierNumber || "—"}</Mono></td>
+                <td className="px-3 py-1.5">
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">
+                    {f.detectedType}
+                  </span>
+                </td>
+                <td className="px-3 py-1.5">
+                  <Mono>{f.supplierNumber || "—"}</Mono>
+                </td>
                 <td className="px-3 py-1.5">{f.paymentDate || f.reportDate || "—"}</td>
                 <td className="px-3 py-1.5">
                   <div className="flex flex-wrap gap-1">
                     {(f.bankReferences ?? []).map((b) => (
-                      <Mono key={b} className="rounded bg-muted px-1 py-0.5 text-[10px]">{b}</Mono>
+                      <Mono key={b} className="rounded bg-muted px-1 py-0.5 text-[10px]">
+                        {b}
+                      </Mono>
                     ))}
                   </div>
                 </td>
                 <td className="px-3 py-1.5 text-right tabular-nums">{f.recordCount}</td>
-                <td className="px-3 py-1.5 text-right tabular-nums">{Math.round(f.parseConfidence * 100)}%</td>
-                <td className={`px-3 py-1.5 text-right tabular-nums ${f.warnings.length ? "text-warning" : "text-muted-foreground"}`}>{f.warnings.length}</td>
+                <td className="px-3 py-1.5 text-right tabular-nums">
+                  {Math.round(f.parseConfidence * 100)}%
+                </td>
+                <td
+                  className={`px-3 py-1.5 text-right tabular-nums ${f.warnings.length ? "text-warning" : "text-muted-foreground"}`}
+                >
+                  {f.warnings.length}
+                </td>
               </tr>
               {expanded.has(f.id) && (
                 <tr key={`${f.id}-raw`} className="bg-muted/20">
@@ -568,12 +776,17 @@ export function FilesTab() {
                       <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                         Raw extracted text (pdfjs-dist)
                       </div>
-                      <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => copyText(f.rawText ?? "")}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-[11px]"
+                        onClick={() => copyText(f.rawText ?? "")}
+                      >
                         Copy raw text
                       </Button>
                     </div>
                     <pre className="max-h-[400px] overflow-auto whitespace-pre-wrap break-words rounded border border-border bg-background p-2 font-mono text-[10px] leading-snug">
-{f.rawText || "(no text extracted)"}
+                      {f.rawText || "(no text extracted)"}
                     </pre>
                   </td>
                 </tr>
@@ -595,21 +808,32 @@ export function SafetyNetTab() {
   return (
     <div className="space-y-3">
       <Banner tone="info" icon={<Info className="h-4 w-4" />}>
-        Safety Net statements use a different reference style and are <strong>not</strong> mixed into the standard PBS claim payment reconciliation totals.
+        Safety Net statements use a different reference style and are <strong>not</strong> mixed
+        into the standard PBS claim payment reconciliation totals.
       </Banner>
       <Card className="overflow-hidden border-border/60">
         <table className="w-full text-xs">
           <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
             <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
-              <th>Print date</th><th>PBS ID</th><th>Claim ref</th><th>Card issued</th><th>Card holder</th><th>Result</th><th>Reason</th>
+              <th>Print date</th>
+              <th>PBS ID</th>
+              <th>Claim ref</th>
+              <th>Card issued</th>
+              <th>Card holder</th>
+              <th>Result</th>
+              <th>Reason</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {safetyNet.map((r) => (
               <tr key={r.id}>
                 <td className="px-3 py-1.5">{r.printDate || "—"}</td>
-                <td className="px-3 py-1.5"><Mono>{r.pbsPaymentId || "—"}</Mono></td>
-                <td className="px-3 py-1.5"><Mono>{r.claimReference || "—"}</Mono></td>
+                <td className="px-3 py-1.5">
+                  <Mono>{r.pbsPaymentId || "—"}</Mono>
+                </td>
+                <td className="px-3 py-1.5">
+                  <Mono>{r.claimReference || "—"}</Mono>
+                </td>
                 <td className="px-3 py-1.5">{r.cardIssued || "—"}</td>
                 <td className="px-3 py-1.5">{r.cardHolder || "—"}</td>
                 <td className="px-3 py-1.5">{r.result || "—"}</td>
@@ -619,7 +843,9 @@ export function SafetyNetTab() {
           </tbody>
         </table>
         {safetyNet.length === 0 && (
-          <div className="p-6 text-center text-sm text-muted-foreground">No Safety Net statements uploaded.</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            No Safety Net statements uploaded.
+          </div>
         )}
       </Card>
     </div>
@@ -631,39 +857,56 @@ export function WarningsTab() {
   const files = useAppStore((s) => s.files);
   const summaries = useAppStore((s) => s.summaries);
   const [showDiag, setShowDiag] = useState(false);
-  const items = files.flatMap((f) =>
-    f.warnings.map((w) => ({ file: f.name, ...w })),
-  );
+  const items = files.flatMap((f) => f.warnings.map((w) => ({ file: f.name, ...w })));
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden border-border/60">
         <table className="w-full text-xs">
           <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
             <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
-              <th>Severity</th><th>File</th><th>Type</th><th>Affected ID</th><th>Message</th><th>Snippet</th>
+              <th>Severity</th>
+              <th>File</th>
+              <th>Type</th>
+              <th>Affected ID</th>
+              <th>Message</th>
+              <th>Snippet</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
             {items.map((w, i) => (
               <tr key={i}>
                 <td className="px-3 py-1.5">
-                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                    w.severity === "error" ? "bg-destructive text-destructive-foreground"
-                    : w.severity === "warning" ? "bg-warning text-warning-foreground"
-                    : "bg-muted text-muted-foreground"
-                  }`}>{w.severity}</span>
+                  <span
+                    className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                      w.severity === "error"
+                        ? "bg-destructive text-destructive-foreground"
+                        : w.severity === "warning"
+                          ? "bg-warning text-warning-foreground"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {w.severity}
+                  </span>
                 </td>
                 <td className="px-3 py-1.5">{w.file}</td>
-                <td className="px-3 py-1.5"><Mono>{w.type}</Mono></td>
-                <td className="px-3 py-1.5"><Mono>{w.pbsPaymentId || "—"}</Mono></td>
+                <td className="px-3 py-1.5">
+                  <Mono>{w.type}</Mono>
+                </td>
+                <td className="px-3 py-1.5">
+                  <Mono>{w.pbsPaymentId || "—"}</Mono>
+                </td>
                 <td className="px-3 py-1.5">{w.message}</td>
-                <td className="px-3 py-1.5 max-w-[280px] truncate font-mono text-[10px] text-muted-foreground">{w.textSnippet || "—"}</td>
+                <td className="px-3 py-1.5 max-w-[280px] truncate font-mono text-[10px] text-muted-foreground">
+                  {w.textSnippet || "—"}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
         {items.length === 0 && (
-          <div className="p-6 text-center text-sm text-muted-foreground">No parse warnings. Everything looks clean. ✓</div>
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            No parse warnings. Everything looks clean. ✓
+          </div>
         )}
       </Card>
 
@@ -714,14 +957,18 @@ export function WarningsTab() {
                         {s.subtotal ?? "—"}
                         {d?.subtotalFallbackUsed ? " (fallback)" : ""}
                       </td>
-                      <td className="px-2 py-1.5 text-right">{Math.round(s.parseConfidence * 100)}%</td>
+                      <td className="px-2 py-1.5 text-right">
+                        {Math.round(s.parseConfidence * 100)}%
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
             {summaries.length === 0 && (
-              <div className="p-6 text-center text-sm text-muted-foreground">No summary records parsed.</div>
+              <div className="p-6 text-center text-sm text-muted-foreground">
+                No summary records parsed.
+              </div>
             )}
           </div>
         )}

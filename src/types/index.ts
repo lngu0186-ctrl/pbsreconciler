@@ -1,8 +1,4 @@
-export type DocumentType =
-  | "summary"
-  | "advice"
-  | "safetyNet"
-  | "unknown";
+export type DocumentType = "summary" | "advice" | "safetyNet" | "unknown";
 
 export interface ParseWarning {
   type: string;

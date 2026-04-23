@@ -1,18 +1,9 @@
 import { useAppStore } from "@/store/appStore";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Mono } from "@/components/Mono";
 import { formatAUD, formatSignedAUD, formatNumber } from "@/lib/currency";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 
 export function DetailDrawer() {
@@ -33,13 +24,9 @@ export function DetailDrawer() {
               </SheetTitle>
               <div className="text-xs text-muted-foreground">
                 Claim period{" "}
-                <Mono>
-                  {result.claimPeriodFromSummary || result.claimPeriodFromAdvice || "—"}
-                </Mono>{" "}
+                <Mono>{result.claimPeriodFromSummary || result.claimPeriodFromAdvice || "—"}</Mono>{" "}
                 · Bank ref{" "}
-                <Mono>
-                  {result.bankReferenceSummary || result.bankReferenceAdvice || "—"}
-                </Mono>
+                <Mono>{result.bankReferenceSummary || result.bankReferenceAdvice || "—"}</Mono>
               </div>
             </SheetHeader>
 
@@ -65,27 +52,63 @@ export function DetailDrawer() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border [&>tr>td]:px-3 [&>tr>td]:py-1.5">
-                    <Row label="General benefits" s={result.summaryRecord?.generalBenefits} a={result.adviceRecord?.generalBenefits} />
-                    <Row label="General under-co" s={undefined} a={result.adviceRecord?.generalUnderCoBenefits} />
-                    <Row label="Concessional benefits" s={result.summaryRecord?.concessionalBenefits} a={result.adviceRecord?.concessionalBenefits} />
-                    <Row label="Entitlement / free" s={result.summaryRecord?.entitlementBenefits} a={result.adviceRecord?.entitlementBenefits} />
-                    <Row label="Repatriation (RPBS)" s={result.summaryRecord?.repatriationBenefits} a={result.adviceRecord?.repatriationBenefits} />
-                    <Row label="Doctor's Bag" s={result.summaryRecord?.doctorsBagBenefits} a={result.adviceRecord?.doctorsBagBenefits} />
+                    <Row
+                      label="General benefits"
+                      s={result.summaryRecord?.generalBenefits}
+                      a={result.adviceRecord?.generalBenefits}
+                    />
+                    <Row
+                      label="General under-co"
+                      s={undefined}
+                      a={result.adviceRecord?.generalUnderCoBenefits}
+                    />
+                    <Row
+                      label="Concessional benefits"
+                      s={result.summaryRecord?.concessionalBenefits}
+                      a={result.adviceRecord?.concessionalBenefits}
+                    />
+                    <Row
+                      label="Entitlement / free"
+                      s={result.summaryRecord?.entitlementBenefits}
+                      a={result.adviceRecord?.entitlementBenefits}
+                    />
+                    <Row
+                      label="Repatriation (RPBS)"
+                      s={result.summaryRecord?.repatriationBenefits}
+                      a={result.adviceRecord?.repatriationBenefits}
+                    />
+                    <Row
+                      label="Doctor's Bag"
+                      s={result.summaryRecord?.doctorsBagBenefits}
+                      a={result.adviceRecord?.doctorsBagBenefits}
+                    />
                     <tr className="bg-muted/30 font-semibold">
                       <td>Subtotal / Total PBS</td>
-                      <td className="text-right tabular-nums">{formatAUD(result.summarySubtotal)}</td>
-                      <td className="text-right tabular-nums">{formatAUD(result.adviceTotalPBS)}</td>
+                      <td className="text-right tabular-nums">
+                        {formatAUD(result.summarySubtotal)}
+                      </td>
+                      <td className="text-right tabular-nums">
+                        {formatAUD(result.adviceTotalPBS)}
+                      </td>
                     </tr>
-                    <Row label="Total (PBS + RPBS)" s={undefined} a={result.adviceTotalPBSPlusRPBS} />
+                    <Row
+                      label="Total (PBS + RPBS)"
+                      s={undefined}
+                      a={result.adviceTotalPBSPlusRPBS}
+                    />
                     <tr>
                       <td className="text-muted-foreground">ACSS component 1</td>
                       <td></td>
-                      <td className="text-right tabular-nums">{formatAUD(result.adviceRecord?.acssComponentOneAmount)}</td>
+                      <td className="text-right tabular-nums">
+                        {formatAUD(result.adviceRecord?.acssComponentOneAmount)}
+                      </td>
                     </tr>
                     <tr>
                       <td className="text-muted-foreground">ACSS component 2</td>
                       <td></td>
-                      <td className="text-right tabular-nums">{formatAUD(result.adviceRecord?.acssComponentTwoAmount)}</td>
+                      <td className="text-right tabular-nums">
+                        {formatAUD(result.adviceRecord?.acssComponentTwoAmount)}
+                      </td>
                     </tr>
                     <tr className="font-medium">
                       <td>Total ACSS fees</td>
@@ -97,14 +120,18 @@ export function DetailDrawer() {
                       <td></td>
                       <td className="text-right tabular-nums">{formatAUD(result.bankedTotal)}</td>
                     </tr>
-                    <tr className={
-                      result.difference !== undefined && Math.abs(result.difference) >= 1
-                        ? "bg-destructive/10 font-semibold text-destructive"
-                        : "bg-success/10 font-semibold text-success"
-                    }>
+                    <tr
+                      className={
+                        result.difference !== undefined && Math.abs(result.difference) >= 1
+                          ? "bg-destructive/10 font-semibold text-destructive"
+                          : "bg-success/10 font-semibold text-success"
+                      }
+                    >
                       <td>Difference (Advice − Summary)</td>
                       <td></td>
-                      <td className="text-right tabular-nums">{formatSignedAUD(result.difference)}</td>
+                      <td className="text-right tabular-nums">
+                        {formatSignedAUD(result.difference)}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
@@ -112,7 +139,10 @@ export function DetailDrawer() {
             </section>
 
             <section className="mt-4 grid grid-cols-2 gap-3 text-xs">
-              <Meta label="Rx transactions" value={formatNumber(result.summaryRecord?.rxTransactions)} />
+              <Meta
+                label="Rx transactions"
+                value={formatNumber(result.summaryRecord?.rxTransactions)}
+              />
               <Meta label="Amount paid" value={formatAUD(result.summaryRecord?.amountPaid)} />
               <Meta label="Advice date" value={result.adviceRecord?.adviceDate || "—"} />
               <Meta label="Payment date" value={result.adviceRecord?.paymentDate || "—"} />
@@ -120,7 +150,7 @@ export function DetailDrawer() {
               <Meta label="Advice file" value={result.adviceRecord?.sourceFileName || "—"} />
               <Meta
                 label="Parse confidence"
-                value={`${Math.round(((result.summaryRecord?.parseConfidence ?? 1) + (result.adviceRecord?.parseConfidence ?? 1)) / 2 * 100)}%`}
+                value={`${Math.round((((result.summaryRecord?.parseConfidence ?? 1) + (result.adviceRecord?.parseConfidence ?? 1)) / 2) * 100)}%`}
               />
               <Meta label="Issue flags" value={result.issueFlags.join(", ") || "—"} />
             </section>
@@ -128,7 +158,10 @@ export function DetailDrawer() {
             {(result.summaryRecord?.rawTextBlock || result.adviceRecord?.rawTextBlock) && (
               <section className="mt-4 space-y-2">
                 {result.summaryRecord?.rawTextBlock && (
-                  <RawBlock title="Summary extracted text" text={result.summaryRecord.rawTextBlock} />
+                  <RawBlock
+                    title="Summary extracted text"
+                    text={result.summaryRecord.rawTextBlock}
+                  />
                 )}
                 {result.adviceRecord?.rawTextBlock && (
                   <RawBlock title="Advice extracted text" text={result.adviceRecord.rawTextBlock} />
