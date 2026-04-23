@@ -12,6 +12,7 @@ import {
   SafetyNetTab,
   WarningsTab,
 } from "@/components/Tabs";
+import { DiagnosticsTab } from "@/components/DiagnosticsTab";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/")({
@@ -46,6 +47,7 @@ function Index() {
               <TabsTrigger value="files">Files</TabsTrigger>
               <TabsTrigger value="safety">Safety Net</TabsTrigger>
               <TabsTrigger value="warnings">Parse Warnings</TabsTrigger>
+              <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
             </TabsList>
             <TabsContent value="overview">
               <OverviewTab />
