@@ -9,6 +9,8 @@ const CLAIM_PERIOD_RE = /\b(?:claim\s*period|period)[:\s#-]*?(\d{3,4})\b/i;
 const SUBTOTAL_GROUP_RE = /^\s*Sub\s*Total\b/i;
 const AMT_PAID_LABEL_RE = /Amt\.?\s*Paid\b/i;
 const MONEY_TOKEN_RE = /[\d,]+\.\d{2}/g;
+// Grand-total / footer rows that must NEVER be assigned to a PBS Payment ID record
+const GRAND_TOTAL_RE = /(Total\s*Rx\s*Trans|Total\s*Amt\.?\s*Paid|Grand\s*Total)/i;
 
 export interface SummaryParseResult {
   entries: SummaryEntry[];
