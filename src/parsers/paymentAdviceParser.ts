@@ -87,14 +87,30 @@ const RE_DOCTORS_BAG = /Doctor'?s?\s*Bag/i;
 const RE_ACSS_ONE = /ACSS\s*Component\s*1|ACSS\s*Component\s*One/i;
 const RE_ACSS_TWO = /ACSS\s*Component\s*2|ACSS\s*Component\s*Two/i;
 
+function getMostFrequentClaimPeriod(entries: AdviceEntry[]): string | undefined {
+  const counts = new Map<string, number>();
+  for (const e of entries) {
+    if (e.claimPeriod) counts.set(e.claimPeriod, (counts.get(e.claimPeriod) ?? 0) + 1);
+  }
+  let best: string | undefined;
+  let bestCount = 0;
+  for (const [cp, count] of counts) {
+    if (count > bestCount) {
+      best = cp;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
 /**
  * Parse a PBS Payment Advice (incl. RCTI variant).
  *
  * Critical correctness rule: each PBS Payment ID block is parsed in strict
- * isolation. We find every PBS ID position, then for each ID build a block
- * spanning from that position (with a small lookbehind for the bank ref
- * label) up to — but not including — the next PBS ID. All extracted fields
- * are local to the block; nothing carries forward across blocks.
+ * isolation. Block start = the PBS ID's exact position; block end = next
+ * PBS ID's position (or EOF). NO lookbehind — any lookbehind contaminates
+ * the current block with the previous block's totals lines (which appear
+ * AFTER the previous PBS ID in the gap between two IDs).
  */
 export function parsePaymentAdvice(
   text: string,
@@ -110,13 +126,20 @@ export function parsePaymentAdvice(
     text.match(/Approved\s*Supplier[^\n]*?(\d{4,5}[A-Z])/i) || text.match(SUPPLIER_RE);
   const supplierNumber = supplierMatch?.[1];
 
-  const paymentDateMatch = text.match(
-    /Payment\s*Date[:\s]+([0-9]{1,2}\s+[A-Za-z]{3,}\s+20\d{2}|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})/i,
-  );
-  const adviceDateMatch = text.match(
-    /Advice\s*Date[:\s]+([0-9]{1,2}\s+[A-Za-z]{3,}\s+20\d{2}|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4})/i,
-  );
+  // Payment date — Medicare PDFs use a sentence: "We made a total payment on
+  // 07 April 2026 into the following account:". Fall back to legacy label.
+  const paymentDateMatch =
+    text.match(/total\s+payment\s+on\s+(\d{1,2}\s+[A-Za-z]+\s+20\d{2})/i) ||
+    text.match(
+      /Payment\s*Date[:\s]+(\d{1,2}\s+[A-Za-z]{3,}\s+20\d{2}|\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4})/i,
+    );
   const docPaymentDate = paymentDateMatch?.[1];
+
+  // Advice date — Medicare letters print a standalone date line at the top
+  // (e.g. "8 April 2026"). Fall back to a labelled "Advice Date:".
+  const adviceDateMatch =
+    text.match(/Advice\s*Date[:\s]+(\d{1,2}\s+[A-Za-z]{3,}\s+20\d{2})/i) ||
+    text.match(/^\s*(\d{1,2}\s+[A-Za-z]+\s+20\d{2})\s*$/m);
   const docAdviceDate = adviceDateMatch?.[1];
 
   // Document-level bank reference number (Medicare format appears once near
@@ -124,6 +147,12 @@ export function parsePaymentAdvice(
   const docBankRefMatch = text.match(/bank\s*reference\s*number[:\s]+(\d{9,15})/i);
   const docBankReferenceNumber = docBankRefMatch?.[1];
   if (docBankReferenceNumber) bankReferences.add(docBankReferenceNumber);
+
+  // Document-level claim period fallback: scan the full text for the first
+  // 4-digit code in the 2500-2699 range. Used only if per-block extraction
+  // produces nothing.
+  const docClaimPeriodMatch = text.match(/\b(2[5-6]\d{2})\b/);
+  const docClaimPeriodFallback = docClaimPeriodMatch?.[1];
 
   // Find all candidate PBS ID positions in the raw text. The regex already
   // restricts to /1003\d{8}/ but we still reject any candidate that appears
@@ -154,22 +183,16 @@ export function parsePaymentAdvice(
 
   // Final guard: drop any candidate that collides with a known bank reference
   // captured from this document (e.g. the document-level Medicare bank ref).
-  // This prevents bank reference numbers that happen to match /1003\d{8}/
-  // from creating spurious block boundaries.
   const uniquePositions = dedupedPositions.filter((pos) => !bankReferences.has(pos.id));
 
   for (let i = 0; i < uniquePositions.length; i++) {
     const pbsPaymentId = uniquePositions[i].id;
-    // Strict scope: block start = this ID position (with a small lookbehind to
-    // capture the bank-ref / claim-period header that introduces this block);
-    // block end = next ID position (or EOF).
-    const lookbehind = i === 0 ? 400 : 200;
-    const start = Math.max(0, uniquePositions[i].index - lookbehind);
-    // Don't let lookbehind reach into the previous block
-    const safeStart =
-      i > 0
-        ? Math.max(start, uniquePositions[i - 1].index + uniquePositions[i - 1].id.length)
-        : start;
+
+    // Strict scope, NO lookbehind: block = exactly [this ID position, next ID position).
+    // Any lookbehind would pull in the previous record's Total PBS / Total (PBS+RPBS)
+    // lines (which sit in the gap AFTER the previous PBS ID), causing
+    // findValueAfterLabel to return the previous record's totals.
+    const safeStart = uniquePositions[i].index;
     const end = i + 1 < uniquePositions.length ? uniquePositions[i + 1].index : text.length;
 
     const block = text.slice(safeStart, end);
@@ -210,33 +233,25 @@ export function parsePaymentAdvice(
     }
     if (bankReferenceNumber) bankReferences.add(bankReferenceNumber);
 
-    // Claim period: prefer a labelled "Claim Period" within the block.
-    const cpMatch = block.match(/Claim\s*Period[^\n\d]*(\d{3,4})/i);
-    claimPeriod = cpMatch?.[1];
+    // Claim period: in Medicare PDFs it appears as the first column on the
+    // PBS ID row, e.g. "2604  100373819312  General benefits  $8,010.60".
+    // Look for a 4-digit code in the 2500-2699 range either immediately
+    // before or after the PBS ID.
+    const pbsIdLineMatch = block.match(
+      /\b(2[5-6]\d{2})\b[\s\S]{0,60}?\b1003\d{8}\b|\b1003\d{8}\b[\s\S]{0,10}?\b(2[5-6]\d{2})\b/,
+    );
+    claimPeriod = pbsIdLineMatch?.[1] ?? pbsIdLineMatch?.[2];
 
-    // Fallback: in tabular Payment Advice PDFs the claim period (a 4-digit
-    // code in the 2500-2699 range) appears immediately before the PBS
-    // Payment ID on the same row, e.g. "2604  100373819312  ...". Look in
-    // the lookbehind portion of the block (text BEFORE the PBS ID position
-    // within this block) to avoid picking up a different period from the
-    // "Claim periods subtotals summary" section that follows.
     if (!claimPeriod) {
-      const idOffsetInBlock = uniquePositions[i].index - safeStart;
-      const lookbehindText = block.slice(0, Math.max(0, idOffsetInBlock));
-      const periodRe = /\b(2[5-6]\d{2})\b/g;
-      let pm: RegExpExecArray | null;
-      let lastPeriod: string | undefined;
-      while ((pm = periodRe.exec(lookbehindText)) !== null) {
-        lastPeriod = pm[1];
-      }
-      if (lastPeriod) {
-        claimPeriod = lastPeriod;
-      } else {
-        // Last resort: scan the first 200 chars of the block.
-        const head = block.slice(0, 200);
-        const headMatch = head.match(/\b(2[5-6]\d{2})\b/);
-        if (headMatch) claimPeriod = headMatch[1];
-      }
+      // Legacy labelled fallback ("Claim Period: 2604")
+      const cpLabelled = block.match(/Claim\s*Period[^\n\d]*(\d{3,4})/i);
+      claimPeriod = cpLabelled?.[1];
+    }
+
+    if (!claimPeriod) {
+      // Last resort: scan first 200 chars of block for any 2500-2699 code.
+      const head = block.slice(0, 200).match(/\b(2[5-6]\d{2})\b/);
+      claimPeriod = head?.[1] ?? docClaimPeriodFallback;
     }
 
     // Benefit categories
@@ -285,6 +300,9 @@ export function parsePaymentAdvice(
       });
     }
 
+    // First-pass isAdjustment: only based on negative totals. Prior-period
+    // detection happens in the second pass once we know the document's
+    // primary claim period.
     const isAdjustment =
       (totalPBS !== undefined && totalPBS < 0) ||
       (totalPBSPlusRPBS !== undefined && totalPBSPlusRPBS < 0);
@@ -317,6 +335,22 @@ export function parsePaymentAdvice(
       parseWarnings: localWarnings,
     });
     warnings.push(...localWarnings);
+  }
+
+  // Second pass: detect prior-period entries. Any record whose claim period
+  // differs from the document's primary (most-frequent) claim period is a
+  // prior-period adjustment, even if its total is positive.
+  const docPrimaryClaimPeriod = getMostFrequentClaimPeriod(entries);
+  if (docPrimaryClaimPeriod) {
+    for (const e of entries) {
+      if (
+        !e.isAdjustment &&
+        e.claimPeriod !== undefined &&
+        e.claimPeriod !== docPrimaryClaimPeriod
+      ) {
+        e.isAdjustment = true;
+      }
+    }
   }
 
   if (entries.length === 0) {

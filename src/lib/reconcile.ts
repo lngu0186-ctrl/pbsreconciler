@@ -78,9 +78,21 @@ export function reconcile(summaries: SummaryEntry[], advices: AdviceEntry[]): Re
     if (sList.length > 1) issueFlags.push("duplicate-summary");
     // Genuine duplicate: more than one non-adjustment advice entry — flag
     // for human review since totals may diverge across files.
-    if (primaries.length > 1) issueFlags.push("multiple-advice");
-    if (adjustmentSum !== 0) {
-      notes.push(`Includes prior-period adjustment of ${adjustmentSum.toFixed(2)}`);
+    if (primaries.length > 1) {
+      issueFlags.push("duplicate-advice");
+      notes.push(
+        `PBS Payment ID appears in ${primaries.length} different advice files with non-adjustment totals. Human review required.`,
+      );
+    }
+    if (adjustments.length > 0) {
+      const adjTotal = adjustments
+        .filter((a) => a !== primary)
+        .reduce((sum, a) => sum + (adviceComparable(a) ?? 0), 0);
+      if (adjTotal !== 0) {
+        notes.push(
+          `Includes ${adjustments.length} prior-period adjustment(s) totalling ${adjTotal >= 0 ? "+" : ""}$${Math.abs(adjTotal).toFixed(2)}`,
+        );
+      }
     }
 
     let status: ReconStatus;
