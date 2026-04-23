@@ -242,6 +242,40 @@ export function parseSummaryReport(
       });
     }
 
+    const allDecimalsInBlock = extractMoneyValues(blockText);
+    const amountsArrayRaw = amountTokens.length > 0 ? amountTokens.slice(1) : [];
+    const amountsPosition5 = amountsArrayRaw[5] ?? 0;
+    const amountsLastValue =
+      amountsArrayRaw.length > 0 ? amountsArrayRaw[amountsArrayRaw.length - 1] : 0;
+    const amtPaidFound = AMT_PAID_LABEL_RE.test(blockText);
+    const subtotalFallbackUsed =
+      subtotal !== undefined &&
+      amountsArrayRaw[5] !== undefined &&
+      subtotal !== amountsArrayRaw[5];
+
+    // eslint-disable-next-line no-console
+    console.log(`[SummaryParser] ID: ${anchor.pbsPaymentId}`);
+    // eslint-disable-next-line no-console
+    console.log(
+      `[SummaryParser] Raw block: ${JSON.stringify(blockTextDisplay.slice(0, 200))}`,
+    );
+    // eslint-disable-next-line no-console
+    console.log(`[SummaryParser] Amt.Paid token found: ${amtPaidFound}`);
+    // eslint-disable-next-line no-console
+    console.log(`[SummaryParser] Amt.Paid value: ${amountPaid}`);
+    // eslint-disable-next-line no-console
+    console.log(`[SummaryParser] All decimals in block:`, allDecimalsInBlock);
+    // eslint-disable-next-line no-console
+    console.log(`[SummaryParser] Decimals after Amt.Paid:`, amountsArrayRaw);
+    // eslint-disable-next-line no-console
+    console.log(`[SummaryParser] amounts[5]: ${amountsPosition5}`);
+    // eslint-disable-next-line no-console
+    console.log(`[SummaryParser] Last value: ${amountsLastValue}`);
+    // eslint-disable-next-line no-console
+    console.log(
+      `[SummaryParser] Subtotal assigned: ${subtotal}${subtotalFallbackUsed ? " (fallback)" : ""}`,
+    );
+
     entries.push({
       id: uid("se_"),
       sourceFileId,
@@ -264,6 +298,16 @@ export function parseSummaryReport(
       rawTextBlock: blockTextDisplay,
       parseConfidence: confidence,
       parseWarnings: localWarnings,
+      _debug: {
+        rawBlockPreview: blockTextDisplay.slice(0, 300),
+        amtPaidFound,
+        amtPaidValue: amountPaid ?? 0,
+        amountsArrayRaw,
+        amountsPosition5,
+        amountsLastValue,
+        subtotalFallbackUsed,
+        allDecimalsInBlock,
+      },
     });
     warnings.push(...localWarnings);
   }
