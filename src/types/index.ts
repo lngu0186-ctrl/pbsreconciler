@@ -50,7 +50,7 @@ export interface SummaryEntry {
     amtPaidFound: boolean;
     amtPaidValue: number;
     amountsArrayRaw: number[];
-    amountsPosition5: number;
+    amountsPosition4: number;
     amountsLastValue: number;
     subtotalFallbackUsed: boolean;
     allDecimalsInBlock: number[];
