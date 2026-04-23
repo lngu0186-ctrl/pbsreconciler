@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useAppStore } from "@/store/appStore";
 import { KpiCard } from "@/components/KpiCard";
 import { StatusBadge, STATUS_LABELS } from "@/components/StatusBadge";
