@@ -147,6 +147,7 @@ export function Sidebar() {
             Clear
           </Button>
         </div>
+        <ReconTestButton />
       </div>
 
       <div className="flex-1 overflow-y-auto border-t border-border px-3 py-3">
