@@ -178,7 +178,7 @@ export function parseSummaryReport(
       } else if (subtotal !== undefined && subtotal < maxBenefit && lastValue !== undefined) {
         localWarnings.push({
           type: "subtotal-validation",
-          severity: "warning",
+          severity: lastValue > 0 ? "info" : "warning",
           message: `Subtotal at position 4 (${subtotal}) less than max benefit (${maxBenefit}) for ${anchor.pbsPaymentId}; using last value`,
           pbsPaymentId: anchor.pbsPaymentId,
         });
