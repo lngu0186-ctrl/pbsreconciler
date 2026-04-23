@@ -1,13 +1,20 @@
-import type { SummaryEntry, AdviceEntry, UploadedFile } from "@/types";
+import type { SummaryEntry, AdviceEntry, SafetyNetEntry, UploadedFile } from "@/types";
 import { uid } from "@/lib/ids";
 
-const SUMMARY_FILE_ID = "demo_summary_2604";
+const SUMMARY_FILE_ID = "demo_summary_2605";
+const SAFETY_FILE_ID = "demo_safetynet_2605";
 const ADVICE_FILES = {
-  apr07: "demo_advice_apr07",
-  apr10: "demo_advice_apr10",
-  apr17: "demo_advice_apr17",
-  apr20: "demo_advice_apr20",
+  may05: "demo_advice_may05",
+  may08: "demo_advice_may08",
+  may15: "demo_advice_may15",
+  may18: "demo_advice_may18",
 };
+
+// Fictional bank reference numbers — invented placeholders, not real
+const BANK_A = "550012345001";
+const BANK_B = "550012345002";
+const BANK_C = "550012345003";
+const BANK_D = "550012345004";
 
 interface SumSeed {
   pbsPaymentId: string;
@@ -22,27 +29,29 @@ interface SumSeed {
 }
 
 const sumSeeds: SumSeed[] = [
-  // Bank 668002132172
-  { pbsPaymentId: "100373819312", bank: "668002132172", rx: 17, amt: 5585.92, gen: 5585.92, con: 1920.11, ent: 504.57, repat: 0, subtotal: 8010.60 },
-  // Bank 107002160245
-  { pbsPaymentId: "100373834612", bank: "107002160245", rx: 14, amt: 816.22, gen: 816.22, con: 1133.35, ent: 0, repat: 0, subtotal: 1949.57 },
-  { pbsPaymentId: "100373836532", bank: "107002160245", rx: 6, amt: 239.45, gen: 239.45, con: 2477.80, ent: 1751.06, repat: 0, subtotal: 4468.31 },
-  { pbsPaymentId: "100373851832", bank: "107002160245", rx: 21, amt: 332.15, gen: 332.15, con: 12748.91, ent: 1402.01, repat: 10.22, subtotal: 14493.29 },
-  { pbsPaymentId: "100373860444", bank: "107002160245", rx: 40, amt: 3124.20, gen: 3124.20, con: 2878.70, ent: 304.33, repat: 0, subtotal: 6307.23 },
-  { pbsPaymentId: "100373871986", bank: "107002160245", rx: 14, amt: 901.76, gen: 901.76, con: 5605.27, ent: 803.69, repat: 0, subtotal: 7310.72 },
-  // Bank 634002174035
-  { pbsPaymentId: "100373876968", bank: "634002174035", rx: 19, amt: 2229.20, gen: 2229.20, con: 3941.94, ent: 520.44, repat: 0, subtotal: 6691.58 },
-  { pbsPaymentId: "100373883192", bank: "634002174035", rx: 6, amt: 610.22, gen: 610.22, con: 1122.88, ent: 613.99, repat: 0, subtotal: 2347.09 },
-  { pbsPaymentId: "100373890550", bank: "634002174035", rx: 14, amt: 1572.99, gen: 1572.99, con: 358.23, ent: 589.39, repat: 0, subtotal: 2520.61 },
-  { pbsPaymentId: "100373912409", bank: "634002174035", rx: 40, amt: 3273.65, gen: 3273.65, con: 4856.50, ent: 1189.75, repat: 0, subtotal: 9319.90 },
-  { pbsPaymentId: "100373930469", bank: "634002174035", rx: 14, amt: 10481.93, gen: 10481.93, con: 6372.10, ent: 442.12, repat: 376.20, subtotal: 17672.35 },
-  // Bank 69002162279
-  { pbsPaymentId: "100373875118", bank: "69002162279", rx: 19, amt: 288.43, gen: 288.43, con: 3177.10, ent: 670.26, repat: 0, subtotal: 4135.79 },
-  { pbsPaymentId: "100373916618", bank: "69002162279", rx: 11, amt: 269.43, gen: 269.43, con: 2898.90, ent: 366.66, repat: 40.92, subtotal: 3575.91 },
-  // Pending — no advice
-  { pbsPaymentId: "100373923482", bank: "PENDING", rx: 23, amt: 618.94, gen: 618.94, con: 13081.76, ent: 455.87, repat: 0, subtotal: 14156.57 },
-  { pbsPaymentId: "100373929790", bank: "PENDING", rx: 10, amt: 1348.09, gen: 1348.09, con: 4124.85, ent: 271.98, repat: 0, subtotal: 5744.92 },
-  { pbsPaymentId: "100373961682", bank: "PENDING", rx: 11, amt: 669.62, gen: 669.62, con: 876.17, ent: 148.90, repat: 0, subtotal: 1694.69 },
+  // Bank A — single record
+  { pbsPaymentId: "100355010001", bank: BANK_A, rx: 18, amt: 4820.10, gen: 4820.10, con: 1750.40, ent: 425.30, repat: 0, subtotal: 6995.80 },
+
+  // Bank B — multi-record deposit group
+  { pbsPaymentId: "100355010002", bank: BANK_B, rx: 12, amt: 720.45, gen: 720.45, con: 980.20, ent: 0, repat: 0, subtotal: 1700.65 },
+  { pbsPaymentId: "100355010003", bank: BANK_B, rx: 8, amt: 310.80, gen: 310.80, con: 2150.60, ent: 1420.55, repat: 0, subtotal: 3881.95 },
+  { pbsPaymentId: "100355010004", bank: BANK_B, rx: 22, amt: 410.30, gen: 410.30, con: 11200.75, ent: 1280.40, repat: 12.50, subtotal: 12903.95 },
+  { pbsPaymentId: "100355010005", bank: BANK_B, rx: 35, amt: 2840.60, gen: 2840.60, con: 2510.20, ent: 285.40, repat: 0, subtotal: 5636.20 },
+  { pbsPaymentId: "100355010006", bank: BANK_B, rx: 15, amt: 850.40, gen: 850.40, con: 4920.10, ent: 720.30, repat: 0, subtotal: 6490.80 },
+
+  // Bank C
+  { pbsPaymentId: "100355010007", bank: BANK_C, rx: 17, amt: 1980.50, gen: 1980.50, con: 3520.40, ent: 480.20, repat: 0, subtotal: 5981.10 },
+  { pbsPaymentId: "100355010008", bank: BANK_C, rx: 20, amt: 1380.95, gen: 1380.95, con: 358.23, ent: 540.10, repat: 0, subtotal: 2279.28 },
+  { pbsPaymentId: "100355010009", bank: BANK_C, rx: 38, amt: 2950.20, gen: 2950.20, con: 4420.60, ent: 1080.40, repat: 0, subtotal: 8451.20 },
+  { pbsPaymentId: "100355010010", bank: BANK_C, rx: 13, amt: 9320.55, gen: 9320.55, con: 5810.40, ent: 410.20, repat: 320.50, subtotal: 15861.65 },
+
+  // Bank D
+  { pbsPaymentId: "100355010011", bank: BANK_D, rx: 16, amt: 245.60, gen: 245.60, con: 2870.30, ent: 615.40, repat: 0, subtotal: 3731.30 },
+  { pbsPaymentId: "100355010012", bank: BANK_D, rx: 10, amt: 220.40, gen: 220.40, con: 2640.50, ent: 340.20, repat: 35.80, subtotal: 3236.90 },
+
+  // Pending — no advice received yet
+  { pbsPaymentId: "100355010013", bank: "PENDING", rx: 21, amt: 580.20, gen: 580.20, con: 11920.40, ent: 420.30, repat: 0, subtotal: 12940.90 },
+  { pbsPaymentId: "100355010014", bank: "PENDING", rx: 9, amt: 1240.80, gen: 1240.80, con: 3810.20, ent: 248.40, repat: 0, subtotal: 5299.40 },
 ];
 
 interface AdvSeed {
@@ -60,37 +69,40 @@ interface AdvSeed {
 }
 
 const adviceSeeds: AdvSeed[] = [
-  { pbsPaymentId: "100373819312", bank: "668002132172", paymentDate: "07 Apr 2026", fileId: ADVICE_FILES.apr07, fileName: "PBS_Advice_2026-04-07.pdf", claimPeriod: "2604", pbs: 8010.60, rpbs: 0, acss: 233.51, banked: 8244.11 },
+  // 05 May — Bank A
+  { pbsPaymentId: "100355010001", bank: BANK_A, paymentDate: "05 May 2026", fileId: ADVICE_FILES.may05, fileName: "PBS_Advice_2026-05-05.pdf", claimPeriod: "2605", pbs: 6995.80, rpbs: 0, acss: 210.45, banked: 7206.25 },
 
-  { pbsPaymentId: "100373860444", bank: "107002160245", paymentDate: "10 Apr 2026", fileId: ADVICE_FILES.apr10, fileName: "PBS_Advice_2026-04-10.pdf", claimPeriod: "2604", pbs: 6307.23, rpbs: 0, acss: 266.25, banked: 6573.48 },
-  { pbsPaymentId: "100373851832", bank: "107002160245", paymentDate: "10 Apr 2026", fileId: ADVICE_FILES.apr10, fileName: "PBS_Advice_2026-04-10.pdf", claimPeriod: "2604", pbs: 14483.07, rpbs: 10.22, acss: 244.33, banked: 14737.62 },
-  { pbsPaymentId: "100373871986", bank: "107002160245", paymentDate: "10 Apr 2026", fileId: ADVICE_FILES.apr10, fileName: "PBS_Advice_2026-04-10.pdf", claimPeriod: "2604", pbs: 7310.72, rpbs: 0, acss: 272.23, banked: 7582.95 },
-  { pbsPaymentId: "100373836532", bank: "107002160245", paymentDate: "10 Apr 2026", fileId: ADVICE_FILES.apr10, fileName: "PBS_Advice_2026-04-10.pdf", claimPeriod: "2604", pbs: 4468.31, rpbs: 0, acss: 127.54, banked: 4595.85 },
-  { pbsPaymentId: "100373834612", bank: "107002160245", paymentDate: "10 Apr 2026", fileId: ADVICE_FILES.apr10, fileName: "PBS_Advice_2026-04-10.pdf", claimPeriod: "2604", pbs: 1949.57, rpbs: 0, acss: 111.81, banked: 2061.38 },
+  // 08 May — Bank B (multi-ID deposit)
+  { pbsPaymentId: "100355010005", bank: BANK_B, paymentDate: "08 May 2026", fileId: ADVICE_FILES.may08, fileName: "PBS_Advice_2026-05-08.pdf", claimPeriod: "2605", pbs: 5636.20, rpbs: 0, acss: 240.10, banked: 5876.30 },
+  { pbsPaymentId: "100355010004", bank: BANK_B, paymentDate: "08 May 2026", fileId: ADVICE_FILES.may08, fileName: "PBS_Advice_2026-05-08.pdf", claimPeriod: "2605", pbs: 12891.45, rpbs: 12.50, acss: 220.80, banked: 13124.75 },
+  { pbsPaymentId: "100355010006", bank: BANK_B, paymentDate: "08 May 2026", fileId: ADVICE_FILES.may08, fileName: "PBS_Advice_2026-05-08.pdf", claimPeriod: "2605", pbs: 6490.80, rpbs: 0, acss: 245.60, banked: 6736.40 },
+  { pbsPaymentId: "100355010003", bank: BANK_B, paymentDate: "08 May 2026", fileId: ADVICE_FILES.may08, fileName: "PBS_Advice_2026-05-08.pdf", claimPeriod: "2605", pbs: 3881.95, rpbs: 0, acss: 115.30, banked: 3997.25 },
+  { pbsPaymentId: "100355010002", bank: BANK_B, paymentDate: "08 May 2026", fileId: ADVICE_FILES.may08, fileName: "PBS_Advice_2026-05-08.pdf", claimPeriod: "2605", pbs: 1700.65, rpbs: 0, acss: 100.40, banked: 1801.05 },
 
-  { pbsPaymentId: "100373883192", bank: "634002174035", paymentDate: "17 Apr 2026", fileId: ADVICE_FILES.apr17, fileName: "PBS_Advice_2026-04-17.pdf", claimPeriod: "2604", pbs: 2365.00, rpbs: 0, acss: 153.30, banked: 2518.30 },
-  { pbsPaymentId: "100373876968", bank: "634002174035", paymentDate: "17 Apr 2026", fileId: ADVICE_FILES.apr17, fileName: "PBS_Advice_2026-04-17.pdf", claimPeriod: "2604", pbs: 6691.58, rpbs: 0, acss: 213.73, banked: 6905.31 },
-  { pbsPaymentId: "100373930469", bank: "634002174035", paymentDate: "17 Apr 2026", fileId: ADVICE_FILES.apr17, fileName: "PBS_Advice_2026-04-17.pdf", claimPeriod: "2604", pbs: 17296.15, rpbs: 376.20, acss: 357.98, banked: 18030.33 },
-  { pbsPaymentId: "100373912409", bank: "634002174035", paymentDate: "17 Apr 2026", fileId: ADVICE_FILES.apr17, fileName: "PBS_Advice_2026-04-17.pdf", claimPeriod: "2604", pbs: 9319.90, rpbs: 0, acss: 451.38, banked: 9771.28 },
-  { pbsPaymentId: "100373890550", bank: "634002174035", paymentDate: "17 Apr 2026", fileId: ADVICE_FILES.apr17, fileName: "PBS_Advice_2026-04-17.pdf", claimPeriod: "2604", pbs: 2520.61, rpbs: 0, acss: 71.46, banked: 2592.07 },
-  { pbsPaymentId: "100373875118", bank: "634002174035", paymentDate: "17 Apr 2026", fileId: ADVICE_FILES.apr17, fileName: "PBS_Advice_2026-04-17.pdf", claimPeriod: "2604", pbs: 4135.79, rpbs: 0, acss: 178.43, banked: 4314.22 },
-  { pbsPaymentId: "100373923485", bank: "634002174035", paymentDate: "17 Apr 2026", fileId: ADVICE_FILES.apr17, fileName: "PBS_Advice_2026-04-17.pdf", claimPeriod: "2603", pbs: -10.25, rpbs: 0, acss: -1.21, banked: -11.46, isAdj: true },
+  // 15 May — Bank C (includes minor difference + adjustment)
+  { pbsPaymentId: "100355010008", bank: BANK_C, paymentDate: "15 May 2026", fileId: ADVICE_FILES.may15, fileName: "PBS_Advice_2026-05-15.pdf", claimPeriod: "2605", pbs: 2294.40, rpbs: 0, acss: 138.20, banked: 2432.60 },
+  { pbsPaymentId: "100355010007", bank: BANK_C, paymentDate: "15 May 2026", fileId: ADVICE_FILES.may15, fileName: "PBS_Advice_2026-05-15.pdf", claimPeriod: "2605", pbs: 5981.10, rpbs: 0, acss: 195.40, banked: 6176.50 },
+  { pbsPaymentId: "100355010010", bank: BANK_C, paymentDate: "15 May 2026", fileId: ADVICE_FILES.may15, fileName: "PBS_Advice_2026-05-15.pdf", claimPeriod: "2605", pbs: 15541.15, rpbs: 320.50, acss: 325.40, banked: 16187.05 },
+  { pbsPaymentId: "100355010009", bank: BANK_C, paymentDate: "15 May 2026", fileId: ADVICE_FILES.may15, fileName: "PBS_Advice_2026-05-15.pdf", claimPeriod: "2605", pbs: 8451.20, rpbs: 0, acss: 410.20, banked: 8861.40 },
+  { pbsPaymentId: "100355099001", bank: BANK_C, paymentDate: "15 May 2026", fileId: ADVICE_FILES.may15, fileName: "PBS_Advice_2026-05-15.pdf", claimPeriod: "2604", pbs: -8.40, rpbs: 0, acss: -0.95, banked: -9.35, isAdj: true },
 
-  { pbsPaymentId: "100373916618", bank: "69002162279", paymentDate: "20 Apr 2026", fileId: ADVICE_FILES.apr20, fileName: "PBS_Advice_2026-04-20.pdf", claimPeriod: "2604", pbs: 3534.99, rpbs: 40.92, acss: 196.58, banked: 3772.49 },
-  { pbsPaymentId: "100373923485", bank: "69002162279", paymentDate: "20 Apr 2026", fileId: ADVICE_FILES.apr20, fileName: "PBS_Advice_2026-04-20.pdf", claimPeriod: "2603", pbs: -10.25, rpbs: 0, acss: -1.21, banked: -11.46, isAdj: true },
+  // 18 May — Bank D
+  { pbsPaymentId: "100355010012", bank: BANK_D, paymentDate: "18 May 2026", fileId: ADVICE_FILES.may18, fileName: "PBS_Advice_2026-05-18.pdf", claimPeriod: "2605", pbs: 3201.10, rpbs: 35.80, acss: 178.40, banked: 3415.30 },
+  { pbsPaymentId: "100355010011", bank: BANK_D, paymentDate: "18 May 2026", fileId: ADVICE_FILES.may18, fileName: "PBS_Advice_2026-05-18.pdf", claimPeriod: "2605", pbs: 3731.30, rpbs: 0, acss: 162.50, banked: 3893.80 },
 ];
 
 export function buildDemoData(): {
   files: UploadedFile[];
   summaries: SummaryEntry[];
   advices: AdviceEntry[];
+  safetyNet: SafetyNetEntry[];
 } {
   const summaries: SummaryEntry[] = sumSeeds.map((s) => ({
     id: uid("se_"),
     sourceFileId: SUMMARY_FILE_ID,
-    sourceFileName: "Summary_Reconciliation_Report_2604.pdf",
-    reportDate: "22 Apr 2026",
-    claimPeriod: "2604",
+    sourceFileName: "Summary_Reconciliation_Report_2605.pdf",
+    reportDate: "20 May 2026",
+    claimPeriod: "2605",
     bankReferenceNumber: s.bank === "PENDING" ? undefined : s.bank,
     pbsPaymentId: s.pbsPaymentId,
     rxTransactions: s.rx,
@@ -125,18 +137,45 @@ export function buildDemoData(): {
     rawTextBlock: `Demo advice block for ${a.pbsPaymentId}`,
   }));
 
+  // One Safety Net statement entry
+  const safetyNet: SafetyNetEntry[] = [
+    {
+      id: uid("sn_"),
+      sourceFileId: SAFETY_FILE_ID,
+      sourceFileName: "PBS_SafetyNet_Statement_2605.pdf",
+      printDate: "20 May 2026",
+      pbsPaymentId: "100355088001",
+      claimReference: "SN-2605-0001",
+      cardIssued: "Yes",
+      cardHolder: "Demo Cardholder",
+      result: "Approved",
+      assessmentReason: "Threshold met",
+      rawTextBlock: "Demo Safety Net statement entry",
+    },
+  ];
+
   // Build file records
   const fileMap = new Map<string, UploadedFile>();
   fileMap.set(SUMMARY_FILE_ID, {
     id: SUMMARY_FILE_ID,
-    name: "Summary_Reconciliation_Report_2604.pdf",
+    name: "Summary_Reconciliation_Report_2605.pdf",
     detectedType: "summary",
     uploadedAt: Date.now(),
     recordCount: summaries.length,
     parseConfidence: 1,
     warnings: [],
-    reportDate: "22 Apr 2026",
-    bankReferences: ["668002132172", "107002160245", "634002174035", "69002162279"],
+    reportDate: "20 May 2026",
+    bankReferences: [BANK_A, BANK_B, BANK_C, BANK_D],
+  });
+  fileMap.set(SAFETY_FILE_ID, {
+    id: SAFETY_FILE_ID,
+    name: "PBS_SafetyNet_Statement_2605.pdf",
+    detectedType: "safetyNet",
+    uploadedAt: Date.now(),
+    recordCount: safetyNet.length,
+    parseConfidence: 1,
+    warnings: [],
+    reportDate: "20 May 2026",
   });
   for (const a of adviceSeeds) {
     if (!fileMap.has(a.fileId)) {
@@ -149,7 +188,7 @@ export function buildDemoData(): {
         parseConfidence: 1,
         warnings: [],
         paymentDate: a.paymentDate,
-        supplierNumber: "25374L",
+        supplierNumber: "99999X",
         bankReferences: [],
       });
     }
@@ -164,5 +203,6 @@ export function buildDemoData(): {
     files: [...fileMap.values()],
     summaries,
     advices,
+    safetyNet,
   };
 }
