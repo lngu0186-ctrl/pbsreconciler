@@ -115,7 +115,10 @@ export function parseSummaryReport(
     }
 
     const blockLines = lines.slice(startLine, endLine).filter(Boolean);
-    const blockText = blockLines.join("\n");
+    // Join with a space so that values on continuation lines (e.g. a subtotal
+    // that wraps onto the next line) are part of the same token stream.
+    const blockText = blockLines.join(" ");
+    const blockTextDisplay = blockLines.join("\n");
     const localWarnings: ParseWarning[] = [];
     const ctxBank = bankRefAtLine[startLine];
     const claimPeriod = claimPeriodAtLine[startLine] ?? documentClaimPeriod;
@@ -125,55 +128,67 @@ export function parseSummaryReport(
     let concessionalBenefits: number | undefined;
     let entitlementBenefits: number | undefined;
     let repatriationBenefits: number | undefined;
-    let doctorsBagBenefits: number | undefined;
+    const doctorsBagBenefits: number | undefined = undefined;
     let dbfAmount: number | undefined;
     let subtotal: number | undefined;
     let incentives: number | undefined;
     let total: number | undefined;
     let confidence = 0.3;
 
+    // Capture everything after the Amt. Paid label. The first decimal token
+    // there IS the Amt. Paid value; everything after that is the positional
+    // benefit/total stream.
     const afterAmtPaid = blockText.match(/Amt\.?\s*Paid\b([\s\S]*)/i)?.[1] ?? "";
     const amountTokens = extractMoneyValues(afterAmtPaid);
-    const postAmountValues = amountTokens.slice(1);
-    const inferredSubtotal = postAmountValues.length > 0;
 
     if (amountTokens.length > 0) {
       amountPaid = amountTokens[0];
+      // CRITICAL: remove Amt. Paid from the array before positional assignment.
+      // Otherwise every field shifts right by one and subtotal lands at idx 6.
+      const amounts = amountTokens.slice(1);
 
-      if (postAmountValues.length >= 8) {
-        generalBenefits = postAmountValues[0];
-        concessionalBenefits = postAmountValues[1];
-        entitlementBenefits = postAmountValues[2];
-        repatriationBenefits = postAmountValues[3];
-        dbfAmount = postAmountValues[4];
-        subtotal = postAmountValues[5];
-        incentives = postAmountValues[6];
-        total = postAmountValues[7];
-      } else {
-        generalBenefits = amountPaid;
-        concessionalBenefits = postAmountValues[0];
-        entitlementBenefits = postAmountValues[1];
-        repatriationBenefits = postAmountValues[2];
-        dbfAmount = postAmountValues[3];
-        subtotal = postAmountValues[4];
-        incentives = postAmountValues[5];
-        total = postAmountValues[6];
-      }
+      generalBenefits = amounts[0];
+      concessionalBenefits = amounts[1];
+      entitlementBenefits = amounts[2];
+      repatriationBenefits = amounts[3];
+      dbfAmount = amounts[4];
+      subtotal = amounts[5];
+      incentives = amounts[6];
+      total = amounts[7];
 
-      if (subtotal === undefined && postAmountValues.length > 0) {
-        subtotal = postAmountValues[postAmountValues.length - 1];
+      // Validation: subtotal must be >= largest individual benefit.
+      // If positional pick is wrong (or array short), fall back to last value.
+      const maxBenefit = Math.max(
+        generalBenefits ?? 0,
+        concessionalBenefits ?? 0,
+        entitlementBenefits ?? 0,
+        repatriationBenefits ?? 0,
+        dbfAmount ?? 0,
+      );
+      const lastValue = amounts.length > 0 ? amounts[amounts.length - 1] : undefined;
+
+      if (subtotal === undefined && lastValue !== undefined) {
+        subtotal = lastValue;
+        confidence = 0.6;
+      } else if (subtotal !== undefined && subtotal < maxBenefit && lastValue !== undefined) {
+        localWarnings.push({
+          type: "subtotal-validation",
+          severity: "warning",
+          message: `Subtotal at position 5 (${subtotal}) less than max benefit (${maxBenefit}) for ${anchor.pbsPaymentId}; using last value`,
+          pbsPaymentId: anchor.pbsPaymentId,
+        });
+        subtotal = lastValue;
+        confidence = 0.6;
+      } else if (subtotal !== undefined && subtotal > 0) {
+        confidence = 0.9;
       }
 
       if (total === undefined) {
-        total = postAmountValues[postAmountValues.length - 1] ?? subtotal;
+        total = lastValue ?? subtotal;
       }
 
-      if (postAmountValues.length < 3) {
+      if (amounts.length < 3) {
         confidence = 0.3;
-      } else if (subtotal !== undefined && subtotal > 0) {
-        confidence = subtotal === postAmountValues[postAmountValues.length >= 8 ? 5 : 4] ? 0.9 : 0.6;
-      } else if (inferredSubtotal) {
-        confidence = 0.6;
       }
     }
 
