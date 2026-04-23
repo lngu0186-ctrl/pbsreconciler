@@ -578,7 +578,7 @@ export function FilesTab() {
                   </td>
                 </tr>
               )}
-            </Fragment>
+            </Frag>
           ))}
         </tbody>
       </table>
