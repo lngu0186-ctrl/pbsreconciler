@@ -143,42 +143,52 @@ export function parseSummaryReport(
 
     if (amountTokens.length > 0) {
       amountPaid = amountTokens[0];
-      // CRITICAL: remove Amt. Paid from the array before positional assignment.
-      // Otherwise every field shifts right by one and subtotal lands at idx 6.
+      // Remove Amt. Paid from the array before positional assignment.
       const amounts = amountTokens.slice(1);
 
+      // In this Z Dispense PDF extraction the DBF column extracts as a 0
+      // integer (not a decimal) and is filtered out of the decimal-amounts
+      // array, so the subtotal sits at index 4, NOT index 5.
+      // Column order in the decimal stream:
+      //   [0] Gen, [1] Con, [2] Ent, [3] Repat,
+      //   [4] Subtotal, [5] Incentives, [6] GST, [7] Total
       generalBenefits = amounts[0];
       concessionalBenefits = amounts[1];
       entitlementBenefits = amounts[2];
       repatriationBenefits = amounts[3];
-      dbfAmount = amounts[4];
-      subtotal = amounts[5];
-      incentives = amounts[6];
+      dbfAmount = undefined; // not present as a decimal in this layout
+      subtotal = amounts[4];
+      incentives = amounts[5];
       total = amounts[7];
 
       // Validation: subtotal must be >= largest individual benefit.
-      // If positional pick is wrong (or array short), fall back to last value.
       const maxBenefit = Math.max(
         generalBenefits ?? 0,
         concessionalBenefits ?? 0,
         entitlementBenefits ?? 0,
         repatriationBenefits ?? 0,
-        dbfAmount ?? 0,
       );
       const lastValue = amounts.length > 0 ? amounts[amounts.length - 1] : undefined;
 
-      if (subtotal === undefined && lastValue !== undefined) {
+      if ((subtotal === undefined || subtotal === 0) && lastValue !== undefined && lastValue > 0) {
         subtotal = lastValue;
         confidence = 0.6;
       } else if (subtotal !== undefined && subtotal < maxBenefit && lastValue !== undefined) {
         localWarnings.push({
           type: "subtotal-validation",
           severity: "warning",
-          message: `Subtotal at position 5 (${subtotal}) less than max benefit (${maxBenefit}) for ${anchor.pbsPaymentId}; using last value`,
+          message: `Subtotal at position 4 (${subtotal}) less than max benefit (${maxBenefit}) for ${anchor.pbsPaymentId}; using last value`,
           pbsPaymentId: anchor.pbsPaymentId,
         });
         subtotal = lastValue;
         confidence = 0.6;
+      } else if (
+        subtotal !== undefined &&
+        subtotal > 0 &&
+        amounts.length >= 5 &&
+        subtotal >= maxBenefit
+      ) {
+        confidence = 0.95;
       } else if (subtotal !== undefined && subtotal > 0) {
         confidence = 0.9;
       }
