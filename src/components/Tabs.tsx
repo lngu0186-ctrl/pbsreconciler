@@ -515,34 +515,70 @@ export function BankDepositsTab() {
 // ---------- FILES ----------
 export function FilesTab() {
   const files = useAppStore((s) => s.files);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const toggle = (id: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+  const copyText = (text: string) => {
+    void navigator.clipboard?.writeText(text);
+  };
   return (
     <Card className="overflow-hidden border-border/60">
       <table className="w-full text-xs">
         <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
           <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
-            <th>File</th><th>Type</th><th>Supplier</th><th>Date</th><th>Bank refs</th><th className="text-right">Records</th><th className="text-right">Confidence</th><th className="text-right">Warnings</th>
+            <th></th><th>File</th><th>Type</th><th>Supplier</th><th>Date</th><th>Bank refs</th><th className="text-right">Records</th><th className="text-right">Confidence</th><th className="text-right">Warnings</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border">
           {files.map((f) => (
-            <tr key={f.id}>
-              <td className="px-3 py-1.5"><span className="font-medium">{f.name}</span></td>
-              <td className="px-3 py-1.5">
-                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">{f.detectedType}</span>
-              </td>
-              <td className="px-3 py-1.5"><Mono>{f.supplierNumber || "—"}</Mono></td>
-              <td className="px-3 py-1.5">{f.paymentDate || f.reportDate || "—"}</td>
-              <td className="px-3 py-1.5">
-                <div className="flex flex-wrap gap-1">
-                  {(f.bankReferences ?? []).map((b) => (
-                    <Mono key={b} className="rounded bg-muted px-1 py-0.5 text-[10px]">{b}</Mono>
-                  ))}
-                </div>
-              </td>
-              <td className="px-3 py-1.5 text-right tabular-nums">{f.recordCount}</td>
-              <td className="px-3 py-1.5 text-right tabular-nums">{Math.round(f.parseConfidence * 100)}%</td>
-              <td className={`px-3 py-1.5 text-right tabular-nums ${f.warnings.length ? "text-warning" : "text-muted-foreground"}`}>{f.warnings.length}</td>
-            </tr>
+            <>
+              <tr key={f.id}>
+                <td className="px-2 py-1.5">
+                  <Button variant="ghost" size="sm" className="h-6 px-2 text-[10px]" onClick={() => toggle(f.id)}>
+                    {expanded.has(f.id) ? "▼" : "▶"}
+                  </Button>
+                </td>
+                <td className="px-3 py-1.5"><span className="font-medium">{f.name}</span></td>
+                <td className="px-3 py-1.5">
+                  <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide">{f.detectedType}</span>
+                </td>
+                <td className="px-3 py-1.5"><Mono>{f.supplierNumber || "—"}</Mono></td>
+                <td className="px-3 py-1.5">{f.paymentDate || f.reportDate || "—"}</td>
+                <td className="px-3 py-1.5">
+                  <div className="flex flex-wrap gap-1">
+                    {(f.bankReferences ?? []).map((b) => (
+                      <Mono key={b} className="rounded bg-muted px-1 py-0.5 text-[10px]">{b}</Mono>
+                    ))}
+                  </div>
+                </td>
+                <td className="px-3 py-1.5 text-right tabular-nums">{f.recordCount}</td>
+                <td className="px-3 py-1.5 text-right tabular-nums">{Math.round(f.parseConfidence * 100)}%</td>
+                <td className={`px-3 py-1.5 text-right tabular-nums ${f.warnings.length ? "text-warning" : "text-muted-foreground"}`}>{f.warnings.length}</td>
+              </tr>
+              {expanded.has(f.id) && (
+                <tr key={`${f.id}-raw`} className="bg-muted/20">
+                  <td colSpan={9} className="px-3 py-2">
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        Raw extracted text (pdfjs-dist)
+                      </div>
+                      <Button variant="outline" size="sm" className="h-7 text-[11px]" onClick={() => copyText(f.rawText ?? "")}>
+                        Copy raw text
+                      </Button>
+                    </div>
+                    <pre className="max-h-[400px] overflow-auto whitespace-pre-wrap break-words rounded border border-border bg-background p-2 font-mono text-[10px] leading-snug">
+{f.rawText || "(no text extracted)"}
+                    </pre>
+                  </td>
+                </tr>
+              )}
+            </>
           ))}
         </tbody>
       </table>
