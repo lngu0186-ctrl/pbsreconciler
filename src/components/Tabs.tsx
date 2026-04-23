@@ -629,39 +629,103 @@ export function SafetyNetTab() {
 // ---------- WARNINGS ----------
 export function WarningsTab() {
   const files = useAppStore((s) => s.files);
+  const summaries = useAppStore((s) => s.summaries);
+  const [showDiag, setShowDiag] = useState(false);
   const items = files.flatMap((f) =>
     f.warnings.map((w) => ({ file: f.name, ...w })),
   );
   return (
-    <Card className="overflow-hidden border-border/60">
-      <table className="w-full text-xs">
-        <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
-          <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
-            <th>Severity</th><th>File</th><th>Type</th><th>Affected ID</th><th>Message</th><th>Snippet</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {items.map((w, i) => (
-            <tr key={i}>
-              <td className="px-3 py-1.5">
-                <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                  w.severity === "error" ? "bg-destructive text-destructive-foreground"
-                  : w.severity === "warning" ? "bg-warning text-warning-foreground"
-                  : "bg-muted text-muted-foreground"
-                }`}>{w.severity}</span>
-              </td>
-              <td className="px-3 py-1.5">{w.file}</td>
-              <td className="px-3 py-1.5"><Mono>{w.type}</Mono></td>
-              <td className="px-3 py-1.5"><Mono>{w.pbsPaymentId || "—"}</Mono></td>
-              <td className="px-3 py-1.5">{w.message}</td>
-              <td className="px-3 py-1.5 max-w-[280px] truncate font-mono text-[10px] text-muted-foreground">{w.textSnippet || "—"}</td>
+    <div className="space-y-4">
+      <Card className="overflow-hidden border-border/60">
+        <table className="w-full text-xs">
+          <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
+            <tr className="[&>th]:px-3 [&>th]:py-2 [&>th]:font-medium">
+              <th>Severity</th><th>File</th><th>Type</th><th>Affected ID</th><th>Message</th><th>Snippet</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-      {items.length === 0 && (
-        <div className="p-6 text-center text-sm text-muted-foreground">No parse warnings. Everything looks clean. ✓</div>
-      )}
-    </Card>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {items.map((w, i) => (
+              <tr key={i}>
+                <td className="px-3 py-1.5">
+                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                    w.severity === "error" ? "bg-destructive text-destructive-foreground"
+                    : w.severity === "warning" ? "bg-warning text-warning-foreground"
+                    : "bg-muted text-muted-foreground"
+                  }`}>{w.severity}</span>
+                </td>
+                <td className="px-3 py-1.5">{w.file}</td>
+                <td className="px-3 py-1.5"><Mono>{w.type}</Mono></td>
+                <td className="px-3 py-1.5"><Mono>{w.pbsPaymentId || "—"}</Mono></td>
+                <td className="px-3 py-1.5">{w.message}</td>
+                <td className="px-3 py-1.5 max-w-[280px] truncate font-mono text-[10px] text-muted-foreground">{w.textSnippet || "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {items.length === 0 && (
+          <div className="p-6 text-center text-sm text-muted-foreground">No parse warnings. Everything looks clean. ✓</div>
+        )}
+      </Card>
+
+      <Card className="overflow-hidden border-border/60">
+        <button
+          type="button"
+          onClick={() => setShowDiag((v) => !v)}
+          className="flex w-full items-center justify-between border-b border-border bg-muted/30 px-3 py-2 text-left text-sm font-semibold hover:bg-muted/50"
+        >
+          <span>Summary Report Parser Diagnostics (debug)</span>
+          <span className="text-xs text-muted-foreground">
+            {showDiag ? "▼ Hide" : "▶ Show"} · {summaries.length} record(s)
+          </span>
+        </button>
+        {showDiag && (
+          <div className="max-h-[60vh] overflow-auto">
+            <table className="w-full font-mono text-[10px]">
+              <thead className="sticky top-0 z-10 bg-muted/80 backdrop-blur">
+                <tr className="text-left uppercase tracking-wide text-muted-foreground [&>th]:px-2 [&>th]:py-2 [&>th]:font-medium">
+                  <th>PBS ID</th>
+                  <th className="min-w-[260px]">Raw block (first 300)</th>
+                  <th>Amt.Paid found</th>
+                  <th className="text-right">Amt.Paid value</th>
+                  <th className="min-w-[220px]">Amounts array (raw)</th>
+                  <th className="text-right">amounts[5]</th>
+                  <th className="text-right">Last value</th>
+                  <th className="text-right">Subtotal assigned</th>
+                  <th className="text-right">Confidence</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border align-top">
+                {summaries.map((s) => {
+                  const d = s._debug;
+                  return (
+                    <tr key={s.id}>
+                      <td className="px-2 py-1.5">{s.pbsPaymentId}</td>
+                      <td className="px-2 py-1.5 whitespace-pre-wrap break-words text-muted-foreground">
+                        {d?.rawBlockPreview ?? (s.rawTextBlock ?? "").slice(0, 300)}
+                      </td>
+                      <td className="px-2 py-1.5">{d ? (d.amtPaidFound ? "yes" : "no") : "—"}</td>
+                      <td className="px-2 py-1.5 text-right">{d ? d.amtPaidValue : "—"}</td>
+                      <td className="px-2 py-1.5 whitespace-pre-wrap break-words">
+                        {d ? JSON.stringify(d.amountsArrayRaw) : "—"}
+                      </td>
+                      <td className="px-2 py-1.5 text-right">{d ? d.amountsPosition5 : "—"}</td>
+                      <td className="px-2 py-1.5 text-right">{d ? d.amountsLastValue : "—"}</td>
+                      <td className="px-2 py-1.5 text-right">
+                        {s.subtotal ?? "—"}
+                        {d?.subtotalFallbackUsed ? " (fallback)" : ""}
+                      </td>
+                      <td className="px-2 py-1.5 text-right">{Math.round(s.parseConfidence * 100)}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {summaries.length === 0 && (
+              <div className="p-6 text-center text-sm text-muted-foreground">No summary records parsed.</div>
+            )}
+          </div>
+        )}
+      </Card>
+    </div>
   );
 }
