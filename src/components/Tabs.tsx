@@ -857,9 +857,26 @@ export function WarningsTab() {
   const files = useAppStore((s) => s.files);
   const summaries = useAppStore((s) => s.summaries);
   const [showDiag, setShowDiag] = useState(false);
-  const items = files.flatMap((f) => f.warnings.map((w) => ({ file: f.name, ...w })));
+  const [showInfo, setShowInfo] = useState(false);
+  const allItems = files.flatMap((f) => f.warnings.map((w) => ({ file: f.name, ...w })));
+  const items = showInfo ? allItems : allItems.filter((w) => w.severity !== "info");
+  const hiddenInfoCount = allItems.length - items.length;
   return (
     <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs text-muted-foreground">
+          Showing {items.length} of {allItems.length} warning(s)
+          {hiddenInfoCount > 0 && !showInfo ? ` · ${hiddenInfoCount} info hidden` : ""}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-7 text-[11px]"
+          onClick={() => setShowInfo((v) => !v)}
+        >
+          {showInfo ? "Hide INFO warnings" : "Show INFO warnings"}
+        </Button>
+      </div>
       <Card className="overflow-hidden border-border/60">
         <table className="w-full text-xs">
           <thead className="bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
