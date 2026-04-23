@@ -238,7 +238,7 @@ export function parseSummaryReport(
         severity: "warning",
         message: `Could not determine Sub Total for ${anchor.pbsPaymentId}`,
         pbsPaymentId: anchor.pbsPaymentId,
-        textSnippet: blockText.slice(0, 240),
+        textSnippet: blockTextDisplay.slice(0, 240),
       });
     }
 
@@ -261,7 +261,7 @@ export function parseSummaryReport(
       subtotal,
       incentives,
       total,
-      rawTextBlock: blockText,
+      rawTextBlock: blockTextDisplay,
       parseConfidence: confidence,
       parseWarnings: localWarnings,
     });
@@ -276,10 +276,21 @@ export function parseSummaryReport(
     });
   }
 
+  // Capture the report's grand total for validation only — never assign it
+  // to a record. Look for "Total Amt. Paid" followed by decimal tokens; the
+  // grand total is the largest value on that row.
+  let reportGrandTotal: number | undefined;
+  const grandTotalMatch = text.match(/Total\s*Amt\.?\s*Paid([\s\S]{0,240})/i);
+  if (grandTotalMatch) {
+    const tokens = extractMoneyValues(grandTotalMatch[1]);
+    if (tokens.length > 0) reportGrandTotal = Math.max(...tokens);
+  }
+
   return {
     entries,
     warnings,
     reportDate,
     bankReferences: [...bankReferences],
+    reportGrandTotal,
   };
 }
