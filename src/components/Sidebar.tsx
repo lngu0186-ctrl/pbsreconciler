@@ -3,12 +3,10 @@ import { useAppStore } from "@/store/appStore";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Mono } from "@/components/Mono";
-import { ReconTestButton } from "@/components/ReconTestButton";
 import {
   Upload,
   FileText,
   ShieldCheck,
-  Wand2,
   Trash2,
   Loader2,
   CheckCircle2,
@@ -101,7 +99,6 @@ export function Sidebar() {
   const files = useAppStore((s) => s.files);
   const isProcessing = useAppStore((s) => s.isProcessing);
   const uploadFiles = useAppStore((s) => s.uploadFiles);
-  const loadDemo = useAppStore((s) => s.loadDemo);
   const clearAll = useAppStore((s) => s.clearAll);
   const recompute = useAppStore((s) => s.recompute);
 
@@ -137,17 +134,16 @@ export function Sidebar() {
           <CheckCircle2 className="mr-1.5 h-4 w-4" />
           Reconcile
         </Button>
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" onClick={loadDemo} disabled={isProcessing}>
-            <Wand2 className="mr-1.5 h-3.5 w-3.5" />
-            Demo data
-          </Button>
-          <Button variant="outline" size="sm" onClick={clearAll} disabled={isProcessing}>
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Clear
-          </Button>
-        </div>
-        <ReconTestButton />
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full"
+          onClick={clearAll}
+          disabled={isProcessing}
+        >
+          <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+          Clear
+        </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto border-t border-border px-3 py-3">
@@ -156,7 +152,7 @@ export function Sidebar() {
         </div>
         {files.length === 0 && (
           <div className="rounded-md border border-dashed border-border bg-card p-3 text-xs text-muted-foreground">
-            No files yet. Upload reports above, or click Demo data.
+            No files yet. Upload reports above to get started.
           </div>
         )}
         <div className="space-y-2">

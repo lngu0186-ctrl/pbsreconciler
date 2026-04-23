@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import { Sidebar } from "@/components/Sidebar";
 import { DetailDrawer } from "@/components/DetailDrawer";
@@ -13,7 +13,6 @@ import {
   WarningsTab,
 } from "@/components/Tabs";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { useAppStore } from "@/store/appStore";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -30,15 +29,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const loadDemo = useAppStore((s) => s.loadDemo);
-  const filesCount = useAppStore((s) => s.files.length);
   const [tab, setTab] = useState("overview");
-
-  // Auto-load demo data on first visit so the app is immediately useful
-  useEffect(() => {
-    if (filesCount === 0) loadDemo();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
