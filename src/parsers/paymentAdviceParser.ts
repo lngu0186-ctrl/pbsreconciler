@@ -119,12 +119,28 @@ export function parsePaymentAdvice(
   const docPaymentDate = paymentDateMatch?.[1];
   const docAdviceDate = adviceDateMatch?.[1];
 
-  // Find all PBS ID positions in the raw text
+  // Document-level bank reference number (Medicare format appears once near
+  // the top of the advice and applies to every PBS Payment ID in the file).
+  const docBankRefMatch = text.match(/bank\s*reference\s*number[:\s]+(\d{9,15})/i);
+  const docBankReferenceNumber = docBankRefMatch?.[1];
+  if (docBankReferenceNumber) bankReferences.add(docBankReferenceNumber);
+
+  // Find all candidate PBS ID positions in the raw text. The regex already
+  // restricts to /1003\d{8}/ but we still reject any candidate that appears
+  // on a line clearly identifying a bank/account number, OR that equals the
+  // document-level bank reference number itself.
   const matches: { id: string; index: number }[] = [];
   let m: RegExpExecArray | null;
   PBS_ID_RE.lastIndex = 0;
   while ((m = PBS_ID_RE.exec(text)) !== null) {
-    matches.push({ id: m[1], index: m.index });
+    const id = m[1];
+    if (id === docBankReferenceNumber) continue;
+    const lineStart = text.lastIndexOf("\n", m.index) + 1;
+    const lineEndRaw = text.indexOf("\n", m.index);
+    const lineEnd = lineEndRaw === -1 ? text.length : lineEndRaw;
+    const line = text.slice(lineStart, lineEnd);
+    if (NON_PBS_CONTEXT_RE.test(line)) continue;
+    matches.push({ id, index: m.index });
   }
 
   // De-duplicate header references that repeat the same ID right next to itself
