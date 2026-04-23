@@ -185,18 +185,20 @@ export function parsePaymentAdvice(
     let acssTwoCount: number | undefined;
     let acssTwoAmount: number | undefined;
 
-    // Bank reference: prefer "Bank Ref(erence)" labelled value within block.
-    // Match BOTH the Z Dispense format ("Bank Ref. Number 12345") AND the
-    // Medicare format ("Bank reference number: 12345").
+    // Bank reference: prefer "Bank Ref(erence)" labelled value within block,
+    // matching BOTH the Z Dispense format and the Medicare format. Fall back
+    // to the document-level bank reference number captured at the top of file.
     const refLabel =
       block.match(/Bank\s*reference\s*number[:\s]+(\d{9,15})/i) ||
       block.match(/Bank\s*Ref(?:erence)?\.?\s*(?:Number|No\.?)?[:\s]*?(\d{9,15})/i);
     if (refLabel && refLabel[1] !== pbsPaymentId) {
       bankReferenceNumber = refLabel[1];
+    } else if (docBankReferenceNumber) {
+      bankReferenceNumber = docBankReferenceNumber;
     } else {
       const nums = [...block.matchAll(/\b(\d{10,15})\b/g)]
         .map((mm) => mm[1])
-        .filter((n) => n !== pbsPaymentId && !n.startsWith("100"));
+        .filter((n) => n !== pbsPaymentId && !n.startsWith("1003"));
       bankReferenceNumber = nums[0];
     }
     if (bankReferenceNumber) bankReferences.add(bankReferenceNumber);
