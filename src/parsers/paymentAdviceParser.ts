@@ -210,8 +210,34 @@ export function parsePaymentAdvice(
     }
     if (bankReferenceNumber) bankReferences.add(bankReferenceNumber);
 
+    // Claim period: prefer a labelled "Claim Period" within the block.
     const cpMatch = block.match(/Claim\s*Period[^\n\d]*(\d{3,4})/i);
     claimPeriod = cpMatch?.[1];
+
+    // Fallback: in tabular Payment Advice PDFs the claim period (a 4-digit
+    // code in the 2500-2699 range) appears immediately before the PBS
+    // Payment ID on the same row, e.g. "2604  100373819312  ...". Look in
+    // the lookbehind portion of the block (text BEFORE the PBS ID position
+    // within this block) to avoid picking up a different period from the
+    // "Claim periods subtotals summary" section that follows.
+    if (!claimPeriod) {
+      const idOffsetInBlock = uniquePositions[i].index - safeStart;
+      const lookbehindText = block.slice(0, Math.max(0, idOffsetInBlock));
+      const periodRe = /\b(2[5-6]\d{2})\b/g;
+      let pm: RegExpExecArray | null;
+      let lastPeriod: string | undefined;
+      while ((pm = periodRe.exec(lookbehindText)) !== null) {
+        lastPeriod = pm[1];
+      }
+      if (lastPeriod) {
+        claimPeriod = lastPeriod;
+      } else {
+        // Last resort: scan the first 200 chars of the block.
+        const head = block.slice(0, 200);
+        const headMatch = head.match(/\b(2[5-6]\d{2})\b/);
+        if (headMatch) claimPeriod = headMatch[1];
+      }
+    }
 
     // Benefit categories
     generalBenefits = findValueAfterLabel(blockLines, [RE_GENERAL]);
