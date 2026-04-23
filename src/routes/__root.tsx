@@ -29,14 +29,18 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "PBS Reconciler" },
+      { name: "description", content: "Hugh's PBS Claim Reconciliation App reconciles pharmacy dispensing reports with Medicare payment advices." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "PBS Reconciler" },
+      { property: "og:description", content: "Hugh's PBS Claim Reconciliation App reconciles pharmacy dispensing reports with Medicare payment advices." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "PBS Reconciler" },
+      { name: "twitter:description", content: "Hugh's PBS Claim Reconciliation App reconciles pharmacy dispensing reports with Medicare payment advices." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/fLdZzKgBiBhXYWmxgqh2yIovyGz1/social-images/social-1776949595771-ChatGPT_Image_Apr_22,_2026,_08_33_13_PM.webp" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/fLdZzKgBiBhXYWmxgqh2yIovyGz1/social-images/social-1776949595771-ChatGPT_Image_Apr_22,_2026,_08_33_13_PM.webp" },
     ],
     links: [
       {
