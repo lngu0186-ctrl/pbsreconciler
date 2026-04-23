@@ -578,7 +578,7 @@ export function FilesTab() {
                   </td>
                 </tr>
               )}
-            </React.Fragment>
+            </Fragment>
           ))}
         </tbody>
       </table>
