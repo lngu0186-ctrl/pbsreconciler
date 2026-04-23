@@ -2,9 +2,17 @@ import type { AdviceEntry, ParseWarning } from "@/types";
 import { parseMoney, parseInt0 } from "@/lib/parseMoney";
 import { uid } from "@/lib/ids";
 
-const PBS_ID_RE = /\b(1\d{11})\b/g;
+// PBS Payment IDs issued by Services Australia ALWAYS start with "1003"
+// followed by 8 more digits. This pattern is strict to avoid mistaking
+// bank reference numbers (which are also 12 digits) for PBS Payment IDs.
+const PBS_ID_RE = /\b(1003\d{8})\b/g;
 const SUPPLIER_RE = /\b(\d{4,5}[A-Z])\b/;
 const DECIMAL_NUM_RE = /-?\$?\s*[0-9][0-9,]*\.[0-9]{2}/;
+
+// Lines that contain bank/account identifiers — any 12-digit number on such
+// a line must NOT be treated as a PBS Payment ID.
+const NON_PBS_CONTEXT_RE =
+  /bank\s*reference\s*number|bank\s*ref(?:erence)?\.?\s*(?:number|no\.?)?|\bBSB\b|branch\s*number|account\s*number/i;
 
 export interface AdviceParseResult {
   entries: AdviceEntry[];
@@ -111,12 +119,28 @@ export function parsePaymentAdvice(
   const docPaymentDate = paymentDateMatch?.[1];
   const docAdviceDate = adviceDateMatch?.[1];
 
-  // Find all PBS ID positions in the raw text
+  // Document-level bank reference number (Medicare format appears once near
+  // the top of the advice and applies to every PBS Payment ID in the file).
+  const docBankRefMatch = text.match(/bank\s*reference\s*number[:\s]+(\d{9,15})/i);
+  const docBankReferenceNumber = docBankRefMatch?.[1];
+  if (docBankReferenceNumber) bankReferences.add(docBankReferenceNumber);
+
+  // Find all candidate PBS ID positions in the raw text. The regex already
+  // restricts to /1003\d{8}/ but we still reject any candidate that appears
+  // on a line clearly identifying a bank/account number, OR that equals the
+  // document-level bank reference number itself.
   const matches: { id: string; index: number }[] = [];
   let m: RegExpExecArray | null;
   PBS_ID_RE.lastIndex = 0;
   while ((m = PBS_ID_RE.exec(text)) !== null) {
-    matches.push({ id: m[1], index: m.index });
+    const id = m[1];
+    if (id === docBankReferenceNumber) continue;
+    const lineStart = text.lastIndexOf("\n", m.index) + 1;
+    const lineEndRaw = text.indexOf("\n", m.index);
+    const lineEnd = lineEndRaw === -1 ? text.length : lineEndRaw;
+    const line = text.slice(lineStart, lineEnd);
+    if (NON_PBS_CONTEXT_RE.test(line)) continue;
+    matches.push({ id, index: m.index });
   }
 
   // De-duplicate header references that repeat the same ID right next to itself
@@ -161,18 +185,20 @@ export function parsePaymentAdvice(
     let acssTwoCount: number | undefined;
     let acssTwoAmount: number | undefined;
 
-    // Bank reference: prefer "Bank Ref(erence)" labelled value within block.
-    // Match BOTH the Z Dispense format ("Bank Ref. Number 12345") AND the
-    // Medicare format ("Bank reference number: 12345").
+    // Bank reference: prefer "Bank Ref(erence)" labelled value within block,
+    // matching BOTH the Z Dispense format and the Medicare format. Fall back
+    // to the document-level bank reference number captured at the top of file.
     const refLabel =
       block.match(/Bank\s*reference\s*number[:\s]+(\d{9,15})/i) ||
       block.match(/Bank\s*Ref(?:erence)?\.?\s*(?:Number|No\.?)?[:\s]*?(\d{9,15})/i);
     if (refLabel && refLabel[1] !== pbsPaymentId) {
       bankReferenceNumber = refLabel[1];
+    } else if (docBankReferenceNumber) {
+      bankReferenceNumber = docBankReferenceNumber;
     } else {
       const nums = [...block.matchAll(/\b(\d{10,15})\b/g)]
         .map((mm) => mm[1])
-        .filter((n) => n !== pbsPaymentId && !n.startsWith("100"));
+        .filter((n) => n !== pbsPaymentId && !n.startsWith("1003"));
       bankReferenceNumber = nums[0];
     }
     if (bankReferenceNumber) bankReferences.add(bankReferenceNumber);
