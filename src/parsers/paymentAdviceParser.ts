@@ -2,9 +2,17 @@ import type { AdviceEntry, ParseWarning } from "@/types";
 import { parseMoney, parseInt0 } from "@/lib/parseMoney";
 import { uid } from "@/lib/ids";
 
-const PBS_ID_RE = /\b(1\d{11})\b/g;
+// PBS Payment IDs issued by Services Australia ALWAYS start with "1003"
+// followed by 8 more digits. This pattern is strict to avoid mistaking
+// bank reference numbers (which are also 12 digits) for PBS Payment IDs.
+const PBS_ID_RE = /\b(1003\d{8})\b/g;
 const SUPPLIER_RE = /\b(\d{4,5}[A-Z])\b/;
 const DECIMAL_NUM_RE = /-?\$?\s*[0-9][0-9,]*\.[0-9]{2}/;
+
+// Lines that contain bank/account identifiers — any 12-digit number on such
+// a line must NOT be treated as a PBS Payment ID.
+const NON_PBS_CONTEXT_RE =
+  /bank\s*reference\s*number|bank\s*ref(?:erence)?\.?\s*(?:number|no\.?)?|\bBSB\b|branch\s*number|account\s*number/i;
 
 export interface AdviceParseResult {
   entries: AdviceEntry[];
