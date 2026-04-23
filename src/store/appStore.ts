@@ -7,7 +7,6 @@ import { parseSummaryReport } from "@/parsers/summaryReportParser";
 import { parsePaymentAdvice } from "@/parsers/paymentAdviceParser";
 import { parseSafetyNet } from "@/parsers/safetyNetParser";
 import { uid } from "@/lib/ids";
-import { buildDemoData } from "@/lib/demoData";
 
 interface AppState {
   files: UploadedFile[];
@@ -18,7 +17,6 @@ interface AppState {
   selectedPbsId?: string;
   isProcessing: boolean;
 
-  loadDemo: () => void;
   clearAll: () => void;
   uploadFiles: (files: File[]) => Promise<void>;
   recompute: () => void;
@@ -32,17 +30,6 @@ export const useAppStore = create<AppState>((set, get) => ({
   safetyNet: [],
   results: [],
   isProcessing: false,
-
-  loadDemo: () => {
-    const { files, summaries, advices, safetyNet } = buildDemoData();
-    set({
-      files,
-      summaries,
-      advices,
-      safetyNet,
-      results: reconcile(summaries, advices),
-    });
-  },
 
   clearAll: () =>
     set({
